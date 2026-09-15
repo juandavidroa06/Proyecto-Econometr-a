@@ -1,0 +1,10 @@
+empresa,ticker,nombre_verificado,mercado_verificado,moneda_verificada,historico_disponible,estado,observaciones
+Celsia,CELSIA.CL,CELSIA S.A. E.S.P.,BVC,COP,2000-01-07,ok,market=co_market; quoteType=EQUITY; country=Colombia
+Banco de Bogota,BOGOTA.CL,Banco de Bogotá S.A.,BVC,COP,2000-01-07,ok,market=co_market; quoteType=EQUITY; country=Colombia
+Ecopetrol,ECOPETROL.CL,Ecopetrol S.A.,BVC,COP,2007-11-28,ok,market=co_market; quoteType=EQUITY; country=Colombia
+ETB,ETB.CL,Empresa de Telecomunicaciones de Bogotá S.A. E.S.P.,BVC,COP,2003-09-09,ok,market=co_market; quoteType=EQUITY; country=Colombia
+Nutresa,NUTRESA.CL,Grupo Nutresa S. A.,BVC,COP,2008-01-02,ok,market=co_market; quoteType=EQUITY; country=Colombia
+Banco Davivienda PF,PFDAVVNDA.CL,Banco Davivienda S.A.,BVC,COP,2010-10-05,ok,market=co_market; quoteType=EQUITY; country=Colombia
+Promigas,PROMIGAS.CL,Promigas S.A. E.S.P.,BVC,COP,2000-01-25,ok,market=co_market; quoteType=EQUITY; country=Colombia
+Mineros SA,MINEROS.CL,Mineros S.A.,BVC,COP,2001-08-30,ok,market=co_market; quoteType=EQUITY; country=Colombia
+Grupo Bolivar,GRUBOLIVAR.CL,Grupo Bolívar S.A.,BVC,COP,2001-08-21,ok,market=co_market; quoteType=EQUITY; country=Colombia

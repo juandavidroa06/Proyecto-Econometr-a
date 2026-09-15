@@ -1,0 +1,1 @@
+"""Subpaquete de adquisición, validación y gestión de datos."""

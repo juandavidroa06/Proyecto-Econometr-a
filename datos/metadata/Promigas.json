@@ -1,0 +1,25 @@
+{
+    "empresa": "Promigas",
+    "ticker": "PROMIGAS.CL",
+    "fuente": "Yahoo Finance",
+    "frecuencia": "1d",
+    "fecha_inicio_solicitada": "2020-01-01",
+    "fecha_fin_solicitada": "2026-09-15",
+    "fecha_descarga": "2026-09-15T15:28:06+00:00",
+    "estado": "ok",
+    "error": null,
+    "advertencias": [],
+    "observaciones": 1713,
+    "fecha_minima": "2020-01-01 00:00:00",
+    "fecha_maxima": "2026-09-14 00:00:00",
+    "columnas": [
+        "Open",
+        "High",
+        "Low",
+        "Close",
+        "Adj Close",
+        "Volume",
+        "Dividends",
+        "Stock Splits"
+    ]
+}

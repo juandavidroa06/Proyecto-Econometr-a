@@ -1,0 +1,10 @@
+empresa,ticker,caso_A_fechas_duplicadas,caso_B_filas_OHLCV_repetidas,caso_C_volumen_cero,caso_D_filas_con_faltantes,total_observaciones,conclusion
+Celsia,CELSIA.CL,0,42,120,0,1717,
+Banco de Bogota,BOGOTA.CL,0,45,125,0,1715,
+Ecopetrol,ECOPETROL.CL,0,40,116,0,1715,
+ETB,ETB.CL,0,45,142,0,1714,
+Nutresa,NUTRESA.CL,0,125,206,0,1716,
+Banco Davivienda PF,PFDAVVNDA.CL,0,38,115,0,1714,
+Promigas,PROMIGAS.CL,0,56,125,0,1713,
+Mineros SA,MINEROS.CL,0,89,174,0,1718,
+Grupo Bolivar,GRUBOLIVAR.CL,0,68,134,1,1716,

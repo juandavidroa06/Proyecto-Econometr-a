@@ -1,0 +1,66 @@
+# =============================================================================
+# .gitignore — Portafolio Colombiano
+# =============================================================================
+
+# --- Entornos virtuales ---
+venv/
+env/
+.venv/
+.env/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+
+# --- Jupyter Notebooks ---
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# --- Archivos de configuración local ---
+config/local_settings.py
+config/local_environment.py
+*.local
+
+# --- Datos temporales y caché ---
+*.tmp
+*.bak
+*.swp
+.cache/
+.pytest_cache/
+.mypy_cache/
+
+# --- Modelos grandes (guardados manualmente) ---
+modelos/**/*.h5
+modelos/**/*.h5py
+modelos/**/*.pkl
+modelos/**/*.joblib
+modelos/**/*.pt
+modelos/**/*.pth
+modelos/**/*.onnx
+
+# --- Sistema ---
+.DS_Store
+Thumbs.db
+desktop.ini
+*.lnk
+
+# --- Archivos de entorno ---
+.env
+.env.*
+
+# --- Datos procesados (reproducibilidad: se generan desde los crudos) ---
+# Descomentar SOLO si se decide que los procesados no se versionan:
+# datos/procesados/
+
+# --- Notebooks checkpoints ---
+.notebooks_checkpoints/
+
+# --- Logs ---
+*.log
+logs/

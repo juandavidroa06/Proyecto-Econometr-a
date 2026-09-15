@@ -1,0 +1,10 @@
+empresa,ticker,observaciones,fecha_inicio,fecha_fin,faltantes,porcentaje_faltantes,duplicados,fechas_duplicadas,precios_invalidos,volumen_invalido,columnas_faltantes,estado,observaciones_calidad
+Celsia,CELSIA.CL,1717,2020-01-01 00:00:00,2026-09-14 00:00:00,0,0.0,46,0,0,0,,ok,
+Banco de Bogota,BOGOTA.CL,1715,2020-01-01 00:00:00,2026-09-14 00:00:00,0,0.0,48,0,0,0,,ok,
+Ecopetrol,ECOPETROL.CL,1715,2020-01-01 00:00:00,2026-09-14 00:00:00,0,0.0,46,0,0,0,,ok,
+ETB,ETB.CL,1714,2020-01-01 00:00:00,2026-09-14 00:00:00,0,0.0,79,0,0,0,,ok,
+Nutresa,NUTRESA.CL,1716,2020-01-01 00:00:00,2026-09-14 00:00:00,0,0.0,134,0,0,0,,ok,
+Banco Davivienda PF,PFDAVVNDA.CL,1714,2020-01-01 00:00:00,2026-09-14 00:00:00,0,0.0,46,0,0,0,,ok,
+Promigas,PROMIGAS.CL,1713,2020-01-01 00:00:00,2026-09-14 00:00:00,0,0.0,65,0,0,0,,ok,
+Mineros SA,MINEROS.CL,1718,2020-01-01 00:00:00,2026-09-14 00:00:00,0,0.0,94,0,0,0,,ok,
+Grupo Bolivar,GRUBOLIVAR.CL,1716,2020-01-01 00:00:00,2026-09-14 00:00:00,5,0.0364,64,0,0,0,,ok,

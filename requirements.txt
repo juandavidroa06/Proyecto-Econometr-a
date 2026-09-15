@@ -1,0 +1,38 @@
+# =============================================================================
+# Portafolio Colombiano — Dependencias (versiones exactas)
+# =============================================================================
+# Reproducibilidad: todas las dependencias están fijadas a una versión exacta.
+# Estas versiones corresponden al entorno donde el proyecto fue verificado
+# (Python 3.14.7). No actualizar sin registrar la decisión en el diario.
+#
+# Las librerías de machine learning, deep learning y agentes de IA se
+# agregarán en fases posteriores cuando se definan las herramientas exactas.
+# =============================================================================
+
+# --- Manejo de datos ---
+numpy==2.5.2
+pandas==3.0.5
+
+# --- Obtención de datos financieros ---
+yfinance==1.7.0
+
+# --- Visualización ---
+matplotlib==3.11.1
+seaborn==0.13.2
+
+# --- Estadística y pruebas ---
+scipy==1.18.0
+
+# --- Econometría y series de tiempo (Kalman, estados-espacio) ---
+statsmodels==0.15.0
+
+# --- Utilidades (dependencias directas del ecosistema) ---
+python-dateutil==2.9.0.post0
+pytz==2026.3.post1
+
+# --- Desarrollo y pruebas ---
+pytest==9.1.1
+
+# --- Econometría avanzada (se instalará en fases posteriores) ---
+# No se utiliza en Fases 2 y 3. Se deja referenciada para fases futuras.
+# arch==6.0.0

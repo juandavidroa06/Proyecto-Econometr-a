@@ -1,0 +1,1 @@
+"""Subpaquete de preprocesamiento y cálculo de rendimientos."""

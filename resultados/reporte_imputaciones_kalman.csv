@@ -1,0 +1,2 @@
+empresa,fecha,variable,valor_original,valor_imputado,metodo,observacion
+Grupo Bolivar,2026-03-10,Adj Close,,86646.17674572048,kalman_smoothing_local_level,NaN imputado con suavizado de Kalman (log-precio).

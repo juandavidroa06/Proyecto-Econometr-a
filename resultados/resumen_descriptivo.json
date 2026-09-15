@@ -1,0 +1,44 @@
+{
+    "activo_mayor_rendimiento_medio": "Nutresa",
+    "rendimiento_medio": 0.0015834310511693666,
+    "activo_mayor_volatilidad": "Nutresa",
+    "volatilidad_mayor": 0.031931158581997764,
+    "activo_menor_volatilidad": "Celsia",
+    "volatilidad_menor": 0.01852337130777106,
+    "pares_mayor_correlacion": [
+        {
+            "activo_a": "Banco Davivienda PF",
+            "activo_b": "Ecopetrol",
+            "correlacion": 0.33467895951193616
+        },
+        {
+            "activo_a": "Celsia",
+            "activo_b": "Banco Davivienda PF",
+            "correlacion": 0.31757460757886913
+        },
+        {
+            "activo_a": "Banco Davivienda PF",
+            "activo_b": "Mineros SA",
+            "correlacion": 0.239757480158536
+        }
+    ],
+    "pares_menor_correlacion": [
+        {
+            "activo_a": "Banco de Bogota",
+            "activo_b": "Promigas",
+            "correlacion": 0.004490977658136667
+        },
+        {
+            "activo_a": "Nutresa",
+            "activo_b": "Celsia",
+            "correlacion": -0.008557546655297024
+        },
+        {
+            "activo_a": "ETB",
+            "activo_b": "Grupo Bolivar",
+            "correlacion": 0.023364296055070087
+        }
+    ],
+    "empresa_mas_observaciones": "Mineros SA",
+    "empresas_con_problemas_calidad": []
+}
