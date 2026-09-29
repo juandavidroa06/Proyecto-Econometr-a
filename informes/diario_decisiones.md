@@ -244,4 +244,34 @@ Cada decisión se registra con el siguiente formato:
 
 ---
 
+### DEC-017: Partición temporal por fechas de corte
+
+- **Fecha:** 2026-09-27
+- **Fase:** Fase 4 — Análisis exploratorio
+- **Decisión:** Se reemplaza la partición por proporciones (70/15/15) por **fechas de corte** en `config/settings.py`: entrenamiento hasta 2023-12-31 (1 043 obs.), validación 2024 (255 obs.) y prueba desde 2025-01-01 hasta el final de la muestra (426 obs.). El bloque de prueba permanece intocable hasta la evaluación final. Las pruebas formales de la Fase 4 se calculan **solo sobre entrenamiento**.
+- **Motivo:** Evitar data leakage: las decisiones del EDA (modelos, transformaciones, exclusiones) no deben depender de la información de validación/prueba. Las fechas son explícitas y reproducibles; las proporciones dependen de cuándo se ejecute el pipeline (FECHA_FIN = hoy).
+- **Alternativas consideradas:** Mantener 70/15/15 (rechazada: el corte se mueve con la fecha de ejecución); partición aleatoria (rechazada: mezcla pasado y futuro).
+- **Evidencia utilizada:** `resultados/particion_temporal.csv`; `src/preprocessing/split.py` con tests.
+- **Impacto:** El evento del 2024-05-03 (ver DEC-018) cae en **validación**, por lo que su tratamiento afecta las métricas de validación.
+- **Estado:** Pendiente de aprobación del equipo (las fechas son una propuesta).
+
+---
+
+### DEC-018 (HALLAZGO Fase 4): Iliquidez y saltos reversibles de precio
+
+- **Fecha:** 2026-09-27
+- **Fase:** Fase 4 — Análisis exploratorio
+- **Observación:** Al analizar la volatilidad móvil de 30 días se detectó un comportamiento anómalo en Promigas (rendimientos de -25,8 % el 2024-05-03 y +26,5 % el 2024-05-06). Se investigó como posible error de dato o iliquidez.
+- **Evidencia:**
+  - El volumen del día del salto (15 031) está en línea con la mediana histórica de la acción (13 283): **no** parece una consecuencia de baja negociación.
+  - Ese día la vela de Promigas es plana (Open = High = Low = Close = 5 100, frente a 6 600 el día anterior y 6 650 el siguiente) y el precio se recupera por completo al día siguiente.
+  - **El mismo patrón aparece el mismo día en otras acciones:** Nutresa (+24,6 %, vela plana 46 700 frente a 36 500) y Mineros (-23,0 %), ambas revertidas el 2024-05-06. Ver `resultados/saltos_reversibles.csv` y `resultados/contexto_saltos.csv`. Otras fechas con reversión simultánea en varias acciones: 2025-02-19 (Ecopetrol y Nutresa) y 2025-09-30 (Nutresa y Mineros).
+  - Sin ese par de días, la volatilidad móvil anualizada máxima de Promigas baja de 112 % a 62 %.
+  - Auditoría de iliquidez (`resultados/auditoria_iliquidez_umbral.csv`, precio de cierre crudo, umbral de referencia 20 % de precio repetido / racha máxima de 15 días): superan el umbral 5 de 9 empresas: ETB (60,9 %, racha 67), Promigas (32,7 %), Nutresa (30,9 %, racha 22), Grupo Bolívar (27,2 %) y Mineros (20,4 %, racha 20).
+- **Interpretación provisional:** Que el volumen sea normal descarta la iliquidez como causa, pero **no** descarta un precio anómalo. La combinación de vela plana, reversión inmediata y coincidencia entre varias acciones apunta más a un problema de la fuente (Yahoo Finance, sufijo `.CL`) o a un evento de mercado común que a un problema propio de Promigas. Es una hipótesis, no una conclusión.
+- **Acción pendiente:** Contrastar estas fechas con una segunda fuente (BVC u otra) antes de decidir.
+- **Estado:** **Pendiente de decisión.** No se elimina ni modifica ningún dato. Se retoma antes de iniciar la Fase 7 (Econometría), al cerrar el criterio final de inclusión de empresas. Requiere revisión del equipo.
+
+---
+
 *Las decisiones siguientes se registrarán conforme avance el proyecto.*

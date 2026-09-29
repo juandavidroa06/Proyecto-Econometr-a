@@ -1,0 +1,747 @@
+diff --git a/README.md b/README.md
+index ee9b656..7daa7e5 100644
+--- a/README.md
++++ b/README.md
+@@ -1,6 +1,6 @@
+ # Portafolio Colombiano — Proyecto de Econometría
+ 
+-> **Estado del proyecto:** En desarrollo — Fases 1, 2, 3 y 3.5 completadas
++> **Estado del proyecto:** En desarrollo — Fases 1, 2, 3 y 3.5 completadas; Fase 4 en curso
+ > **Última actualización:** Septiembre 2026
+ 
+ ---
+@@ -78,6 +78,7 @@ Fases completadas:
+ 2. **Fase 2 — Adquisición y validación:** descarga de datos desde Yahoo Finance, guardado de datos crudos, metadatos y reporte de calidad.
+ 3. **Fase 3 — Preparación y análisis exploratorio:** cálculo de rendimientos (simple y logarítmico), estadística descriptiva, volatilidad, correlaciones, gráficos y detección de outliers.
+ 4. **Fase 3.5 — Auditoría e imputación:** auditoría de tickers y de calidad, formalización de buenas prácticas (`AGENTS.md`), e **imputación del valor faltante con Filtro de Kalman** (con bandera de imputación y validación MAE/RMSE).
++5. **Fase 4 — EDA con partición temporal (en curso):** partición cronológica por fechas (DEC-017), auditoría de iliquidez, detección de saltos reversibles, pruebas formales (Jarque-Bera, ADF/KPSS, Ljung-Box, ARCH-LM) sobre entrenamiento. Hallazgo abierto: DEC-018.
+ 
+ Empresas incluidas (tickers de Yahoo Finance):
+ 
+diff --git a/config/settings.py b/config/settings.py
+index bd1c10a..6f5ad4a 100644
+--- a/config/settings.py
++++ b/config/settings.py
+@@ -79,8 +79,15 @@ AJUSTE_INFLACION = False  # [PLACEHOLDER] — Decidir si se aplica ajuste
+ # CONFIGURACIÓN DE DIVISIÓN TEMPORAL
+ # =============================================================================
+ 
+-# Porcentajes para train/validation/test
+-# Nota: La división será temporal (no aleatoria) para respetar el orden.
++# DEC-017: la partición se define por FECHAS de corte (no por proporciones),
++# para que sea explícita y reproducible. Siempre cronológica, nunca aleatoria.
++#   train      : fecha <= FECHA_FIN_TRAIN
++#   validación : FECHA_FIN_TRAIN < fecha <= FECHA_FIN_VALIDACION
++#   test       : fecha  > FECHA_FIN_VALIDACION  (intocable hasta la evaluación)
++FECHA_FIN_TRAIN = "2023-12-31"
++FECHA_FIN_VALIDACION = "2024-12-31"
++
++# [OBSOLETO tras DEC-017] Se conservan solo por compatibilidad con tests previos.
+ PROPORCION_TRAIN = 0.70
+ PROPORCION_VALIDACION = 0.15
+ PROPORCION_TEST = 0.15
+@@ -99,6 +106,14 @@ PERCENTIL_OUTLIER_ALTA = 0.99
+ # Umbral de z-score para detección exploratoria de valores extremos
+ UMBRAL_ZSCORE = 3.0
+ 
++# Auditoría de iliquidez (umbrales de REFERENCIA, no de exclusión; DEC-018)
++UMBRAL_PCT_PRECIO_REPETIDO = 0.20   # % de días con precio igual al anterior
++UMBRAL_RACHA_MAX_DIAS = 15          # racha máxima de días sin cambio de precio
++
++# Detección de saltos reversibles (posibles precios anómalos; DEC-018)
++UMBRAL_SALTO_LOG = 0.15             # |rendimiento log| mínimo para revisar
++VENTANA_REVERSION_DIAS = 3          # días para que el salto se revierta
++
+ # =============================================================================
+ # CONFIGURACIÓN DE VISUALIZACIÓN
+ # =============================================================================
+diff --git a/informes/diario_decisiones.md b/informes/diario_decisiones.md
+index 4de3b46..5f64f6b 100644
+--- a/informes/diario_decisiones.md
++++ b/informes/diario_decisiones.md
+@@ -244,4 +244,34 @@ Cada decisión se registra con el siguiente formato:
+ 
+ ---
+ 
++### DEC-017: Partición temporal por fechas de corte
++
++- **Fecha:** 2026-09-27
++- **Fase:** Fase 4 — Análisis exploratorio
++- **Decisión:** Se reemplaza la partición por proporciones (70/15/15) por **fechas de corte** en `config/settings.py`: entrenamiento hasta 2023-12-31 (1 043 obs.), validación 2024 (255 obs.) y prueba desde 2025-01-01 hasta el final de la muestra (426 obs.). El bloque de prueba permanece intocable hasta la evaluación final. Las pruebas formales de la Fase 4 se calculan **solo sobre entrenamiento**.
++- **Motivo:** Evitar data leakage: las decisiones del EDA (modelos, transformaciones, exclusiones) no deben depender de la información de validación/prueba. Las fechas son explícitas y reproducibles; las proporciones dependen de cuándo se ejecute el pipeline (FECHA_FIN = hoy).
++- **Alternativas consideradas:** Mantener 70/15/15 (rechazada: el corte se mueve con la fecha de ejecución); partición aleatoria (rechazada: mezcla pasado y futuro).
++- **Evidencia utilizada:** `resultados/particion_temporal.csv`; `src/preprocessing/split.py` con tests.
++- **Impacto:** El evento del 2024-05-03 (ver DEC-018) cae en **validación**, por lo que su tratamiento afecta las métricas de validación.
++- **Estado:** Pendiente de aprobación del equipo (las fechas son una propuesta).
++
++---
++
++### DEC-018 (HALLAZGO Fase 4): Iliquidez y saltos reversibles de precio
++
++- **Fecha:** 2026-09-27
++- **Fase:** Fase 4 — Análisis exploratorio
++- **Observación:** Al analizar la volatilidad móvil de 30 días se detectó un comportamiento anómalo en Promigas (rendimientos de -25,8 % el 2024-05-03 y +26,5 % el 2024-05-06). Se investigó como posible error de dato o iliquidez.
++- **Evidencia:**
++  - El volumen del día del salto (15 031) está en línea con la mediana histórica de la acción (13 283): **no** parece una consecuencia de baja negociación.
++  - Ese día la vela de Promigas es plana (Open = High = Low = Close = 5 100, frente a 6 600 el día anterior y 6 650 el siguiente) y el precio se recupera por completo al día siguiente.
++  - **El mismo patrón aparece el mismo día en otras acciones:** Nutresa (+24,6 %, vela plana 46 700 frente a 36 500) y Mineros (-23,0 %), ambas revertidas el 2024-05-06. Ver `resultados/saltos_reversibles.csv` y `resultados/contexto_saltos.csv`. Otras fechas con reversión simultánea en varias acciones: 2025-02-19 (Ecopetrol y Nutresa) y 2025-09-30 (Nutresa y Mineros).
++  - Sin ese par de días, la volatilidad móvil anualizada máxima de Promigas baja de 112 % a 62 %.
++  - Auditoría de iliquidez (`resultados/auditoria_iliquidez_umbral.csv`, precio de cierre crudo, umbral de referencia 20 % de precio repetido / racha máxima de 15 días): superan el umbral 5 de 9 empresas: ETB (60,9 %, racha 67), Promigas (32,7 %), Nutresa (30,9 %, racha 22), Grupo Bolívar (27,2 %) y Mineros (20,4 %, racha 20).
++- **Interpretación provisional:** Que el volumen sea normal descarta la iliquidez como causa, pero **no** descarta un precio anómalo. La combinación de vela plana, reversión inmediata y coincidencia entre varias acciones apunta más a un problema de la fuente (Yahoo Finance, sufijo `.CL`) o a un evento de mercado común que a un problema propio de Promigas. Es una hipótesis, no una conclusión.
++- **Acción pendiente:** Contrastar estas fechas con una segunda fuente (BVC u otra) antes de decidir.
++- **Estado:** **Pendiente de decisión.** No se elimina ni modifica ningún dato. Se retoma antes de iniciar la Fase 7 (Econometría), al cerrar el criterio final de inclusión de empresas. Requiere revisión del equipo.
++
++---
++
+ *Las decisiones siguientes se registrarán conforme avance el proyecto.*
+diff --git a/resultados/auditoria_iliquidez_umbral.csv b/resultados/auditoria_iliquidez_umbral.csv
+new file mode 100644
+index 0000000..27c8e61
+--- /dev/null
++++ b/resultados/auditoria_iliquidez_umbral.csv
+@@ -0,0 +1,10 @@
++empresa,observaciones,pct_precio_repetido,racha_max_dias,pct_volumen_cero,mediana_volumen,incumple_pct,incumple_racha,supera_umbral,decision
++ETB_CL,1714,0.6089,67,0.0828,79651.5,True,True,True,pendiente
++PROMIGAS_CL,1713,0.3271,9,0.073,13283.0,True,False,True,pendiente
++NUTRESA_CL,1716,0.3096,22,0.12,4453.5,True,True,True,pendiente
++GRUBOLIVAR_CL,1716,0.2723,11,0.0781,1878.5,True,False,True,pendiente
++MINEROS_CL,1718,0.2044,20,0.1013,80204.0,True,True,True,pendiente
++BOGOTA_CL,1715,0.182,8,0.0729,6341.0,False,False,False,pendiente
++PFDAVVNDA_CL,1714,0.1454,3,0.0671,35033.0,False,False,False,pendiente
++CELSIA_CL,1717,0.1404,3,0.0699,134325.0,False,False,False,pendiente
++ECOPETROL_CL,1715,0.1138,3,0.0676,6774011.0,False,False,False,pendiente
+diff --git a/resultados/contexto_saltos.csv b/resultados/contexto_saltos.csv
+new file mode 100644
+index 0000000..d0d0946
+--- /dev/null
++++ b/resultados/contexto_saltos.csv
+@@ -0,0 +1,61 @@
++empresa,Date,Open,High,Low,Close,Adj Close,Volume,Dividends,Stock Splits,volumen_vs_mediana,vela_plana
++Ecopetrol,2025-02-17,2125.0,2260.0,2105.0,2230.0,1907.4912109375,4441204,0.0,0.0,0.6556239722669479,False
++Ecopetrol,2025-02-18,2230.0,2245.0,2160.0,2230.0,1907.4912109375,17805153,0.0,0.0,2.6284505590557794,False
++Ecopetrol,2025-02-19,1820.0,1830.0,1780.0,1820.0,1556.7864990234375,5592990,0.0,0.0,0.8256541065551857,False
++Ecopetrol,2025-02-20,2245.0,2250.0,2210.0,2235.0,1911.7679443359373,12814092,0.0,0.0,1.891655032742049,False
++Ecopetrol,2025-02-21,2235.0,2245.0,2140.0,2145.0,1834.7840576171875,9039781,0.0,0.0,1.3344798229586576,False
++ETB,2023-09-13,82.38999938964844,82.38999938964844,82.38999938964844,82.38999938964844,82.38999938964844,0,0.0,0.0,0.0,True
++ETB,2023-09-14,85.0,85.0,85.0,85.0,85.0,3789,0.0,0.0,0.04756972561722001,True
++ETB,2023-09-15,70.61000061035156,70.61000061035156,70.61000061035156,70.61000061035156,70.61000061035156,14695,0.0,0.0,0.18449118974532808,True
++ETB,2023-09-18,75.48999786376953,75.48999786376953,75.48999786376953,75.48999786376953,75.48999786376953,32643,0.0,0.0,0.40982279053125176,True
++ETB,2023-09-19,85.0,85.0,85.0,85.0,85.0,3389,0.0,0.0,0.042547849067500296,True
++ETB,2023-09-20,80.0,80.0,80.0,80.0,80.0,186,0.0,0.0,0.002335172595619668,True
++ETB,2023-09-21,85.0,85.0,85.0,85.0,85.0,3273,0.0,0.0,0.04109150486808158,True
++ETB,2023-09-22,61.0,61.0,61.0,61.0,61.0,8254,0.0,0.0,0.10362642260346636,True
++ETB,2023-09-25,80.0,80.0,80.0,80.0,80.0,500,0.0,0.0,0.0062773456871496455,True
++ETB,2023-09-26,80.0,80.0,80.0,80.0,80.0,0,0.0,0.0,0.0,True
++ETB,2026-06-26,70.0,93.0,75.0,82.0,82.0,6377243,0.0,0.0,80.06431768391053,False
++ETB,2026-06-29,82.0,82.0,82.0,82.0,82.0,0,0.0,0.0,0.0,True
++ETB,2026-06-30,82.0,99.0,92.0,95.5,95.5,3518131,0.0,0.0,44.16904891935494,False
++ETB,2026-07-01,95.5,105.0,100.0,101.0,101.0,3271446,0.0,0.0,41.07199487768592,False
++ETB,2026-07-02,101.0,104.0,74.5,81.0,81.0,2777032,0.0,0.0,34.86477969655311,False
++Nutresa,2024-04-30,36000.0,36000.0,36000.0,36000.0,35306.625,134,0.0,0.0,0.03008869428539351,True
++Nutresa,2024-05-02,36000.0,36500.0,34560.0,36500.0,35796.99609375,2032,0.0,0.0,0.4562703491635792,False
++Nutresa,2024-05-03,46700.0,46700.0,46700.0,46700.0,45800.5390625,350,0.0,0.0,0.07858987313349051,True
++Nutresa,2024-05-06,36500.0,36500.0,36500.0,36500.0,35796.99609375,200,0.0,0.0,0.04490849893342315,True
++Nutresa,2024-05-07,36500.0,35300.0,35300.0,35300.0,34620.109375,813,0.0,0.0,0.1825530481643651,False
++Nutresa,2025-02-17,118000.0,129000.0,125000.0,125000.0,125000.0,2245,0.0,0.0,0.5040979005276749,False
++Nutresa,2025-02-18,125000.0,125000.0,112500.0,117000.0,117000.0,2465,0.0,0.0,0.5534972493544403,False
++Nutresa,2025-02-19,92000.0,92000.0,92000.0,92000.0,92000.0,176,0.0,0.0,0.03951947906141237,True
++Nutresa,2025-02-20,119900.0,119800.0,111220.0,114980.0,114980.0,3609,0.0,0.0,0.8103738632536207,False
++Nutresa,2025-02-21,114980.0,111980.0,103520.0,109980.0,109980.0,4145,0.0,0.0,0.9307286403951948,False
++Nutresa,2025-09-26,162960.0,174000.0,174000.0,174000.0,174000.0,194,0.0,0.0,0.04356124396542046,False
++Nutresa,2025-09-29,174000.0,174000.0,174000.0,174000.0,174000.0,174,0.0,0.0,0.03907039407207814,True
++Nutresa,2025-09-30,149480.0,147980.0,142720.0,147980.0,147980.0,1018,0.0,0.0,0.22858425957112383,False
++Nutresa,2025-10-01,174000.0,174000.0,174000.0,174000.0,174000.0,244,0.0,0.0,0.05478836869877624,True
++Nutresa,2025-10-02,174000.0,174000.0,174000.0,174000.0,174000.0,159,0.0,0.0,0.035702256652071405,True
++Nutresa,2025-10-21,288800.0,317600.0,288800.0,296000.0,296000.0,4164,0.0,0.0,0.9349949477938699,False
++Nutresa,2025-10-22,296000.0,300000.0,245000.0,245000.0,245000.0,3321,0.0,0.0,0.7457056247894914,False
++Nutresa,2025-10-23,245000.0,220480.0,210000.0,210000.0,210000.0,1423,0.0,0.0,0.3195239699113057,False
++Nutresa,2025-10-24,210000.0,220000.0,200000.0,220000.0,220000.0,3807,0.0,0.0,0.8548332771977096,False
++Nutresa,2025-10-27,220000.0,240000.0,221000.0,240000.0,240000.0,1979,0.0,0.0,0.4443695969462221,False
++Promigas,2024-04-30,6590.0,6600.0,6590.0,6590.0,5519.2705078125,49316,0.0,0.0,3.7127155010163366,False
++Promigas,2024-05-02,6590.0,6600.0,6600.0,6600.0,5527.64453125,15961,0.0,0.0,1.201611081833923,False
++Promigas,2024-05-03,5100.0,5100.0,5100.0,5100.0,4271.3623046875,15031,0.0,0.0,1.131596777836332,True
++Promigas,2024-05-06,6600.0,6650.0,6600.0,6650.0,5569.521484375,43569,0.0,0.0,3.2800572159903636,False
++Promigas,2024-05-07,6650.0,6690.0,6660.0,6690.0,5603.0224609375,56381,0.0,0.0,4.244598358804487,False
++Mineros SA,2024-04-30,3200.0,3200.0,3050.0,3050.0,3049.89697265625,308553,0.0,0.0,3.847102388908284,False
++Mineros SA,2024-05-02,3050.0,3190.0,3130.0,3185.0,3184.892578125,109496,0.0,0.0,1.3652186923345468,False
++Mineros SA,2024-05-03,2530.0,2600.0,2530.0,2530.0,2529.91455078125,135448,0.0,0.0,1.6887935763802304,False
++Mineros SA,2024-05-06,3195.0,3260.0,3175.0,3205.0,3204.89208984375,300604,0.0,0.0,3.747992618822004,False
++Mineros SA,2024-05-07,3205.0,3230.0,3210.0,3230.0,3229.89111328125,130003,0.0,0.0,1.6209041943045235,False
++Mineros SA,2025-09-26,11500.0,12000.0,11540.0,12000.0,11999.921875,227150,0.0,0.0,2.8321530098249466,False
++Mineros SA,2025-09-29,12000.0,12100.0,11980.0,12000.0,11999.921875,437159,0.0,0.0,5.450588499326717,False
++Mineros SA,2025-09-30,10200.0,10300.0,9870.0,10000.0,9999.93359375,103786,0.0,0.0,1.2940252356490949,False
++Mineros SA,2025-10-01,12580.0,12900.0,12600.0,12740.0,12739.916015625,185231,0.0,0.0,2.3094982793875616,False
++Mineros SA,2025-10-02,12740.0,12820.0,12280.0,12460.0,12459.9189453125,126686,0.0,0.0,1.5795471547553739,False
++Mineros SA,2025-12-01,15000.0,15580.0,14940.0,15580.0,15579.9267578125,323173,0.0,0.0,4.02938756171762,False
++Mineros SA,2025-12-02,15580.0,15500.0,15240.0,15480.0,15479.9287109375,163392,0.0,0.0,2.037205126926338,False
++Mineros SA,2025-12-03,13600.0,13340.0,12860.0,13000.0,12999.939453125,328539,0.0,0.0,4.096291955513441,False
++Mineros SA,2025-12-04,15660.0,15600.0,15340.0,15480.0,15479.9287109375,81050,0.0,0.0,1.0105481023390355,False
++Mineros SA,2025-12-05,15480.0,15560.0,15300.0,15340.0,15339.9287109375,32946,0.0,0.0,0.4107775173308064,False
+diff --git a/resultados/particion_temporal.csv b/resultados/particion_temporal.csv
+new file mode 100644
+index 0000000..825da7a
+--- /dev/null
++++ b/resultados/particion_temporal.csv
+@@ -0,0 +1,4 @@
++bloque,inicio,fin,observaciones
++train,2020-01-01,2023-12-29,1043
++validacion,2024-01-01,2024-12-31,255
++test,2025-01-02,2026-09-14,426
+diff --git a/resultados/pruebas_estacionariedad_precios.csv b/resultados/pruebas_estacionariedad_precios.csv
+new file mode 100644
+index 0000000..eeded7e
+--- /dev/null
++++ b/resultados/pruebas_estacionariedad_precios.csv
+@@ -0,0 +1,10 @@
++serie,n,adf_pvalor,kpss_pvalor,adf_rechaza_raiz_unitaria,kpss_rechaza_estacionariedad,serie_tipo
++Celsia,1041,0.4271620458313963,0.01,False,True,precio
++Banco de Bogota,1041,0.6604889546256321,0.01,False,True,precio
++Ecopetrol,1041,0.12672344209888536,0.01,False,True,precio
++ETB,1041,0.671614797285369,0.01,False,True,precio
++Nutresa,1043,0.836041352940825,0.01,False,True,precio
++Banco Davivienda PF,1041,0.11172852300809821,0.01,False,True,precio
++Promigas,1041,0.4292363189994812,0.01,False,True,precio
++Mineros SA,1041,0.8654255032431233,0.01,False,True,precio
++Grupo Bolivar,1041,0.07437291049334914,0.07001969279538763,False,False,precio
+diff --git a/resultados/pruebas_estacionariedad_rendimientos.csv b/resultados/pruebas_estacionariedad_rendimientos.csv
+new file mode 100644
+index 0000000..922c4c8
+--- /dev/null
++++ b/resultados/pruebas_estacionariedad_rendimientos.csv
+@@ -0,0 +1,10 @@
++serie,n,adf_pvalor,kpss_pvalor,adf_rechaza_raiz_unitaria,kpss_rechaza_estacionariedad,serie_tipo
++Celsia,1039,0.0,0.1,True,False,rendimiento_log
++Banco de Bogota,1039,1.0789945852524195e-14,0.1,True,False,rendimiento_log
++Ecopetrol,1039,2.440822560541918e-13,0.1,True,False,rendimiento_log
++ETB,1039,5.378629855037719e-13,0.1,True,False,rendimiento_log
++Nutresa,1042,1.0607263970527234e-13,0.1,True,False,rendimiento_log
++Banco Davivienda PF,1039,0.0,0.1,True,False,rendimiento_log
++Promigas,1039,0.0,0.1,True,False,rendimiento_log
++Mineros SA,1039,0.0,0.1,True,False,rendimiento_log
++Grupo Bolivar,1039,3.2603322135464566e-30,0.1,True,False,rendimiento_log
+diff --git a/resultados/pruebas_rendimientos_train.csv b/resultados/pruebas_rendimientos_train.csv
+new file mode 100644
+index 0000000..c1a147d
+--- /dev/null
++++ b/resultados/pruebas_rendimientos_train.csv
+@@ -0,0 +1,10 @@
++serie,n,jb_pvalor,lb_r_pvalor,lb_r2_pvalor,arch_lm_pvalor,no_normal,autocorrelacion,efecto_arch
++Celsia,1039,0.0,1.9109840412144518e-05,2.982736082635455e-09,3.082445054824795e-05,True,True,True
++Banco de Bogota,1039,0.0,0.05163131675309299,0.48994469124852835,0.5613261073451836,True,False,False
++Ecopetrol,1039,0.0,0.0017212571536671098,3.911611399679888e-58,1.7347792356609918e-34,True,True,True
++ETB,1039,0.0,3.017213021317281e-21,1.587560160607385e-52,3.2565695514680097e-46,True,True,True
++Nutresa,1042,0.0,0.8238604570114276,0.9999997591835685,0.9999997680537481,True,False,False
++Banco Davivienda PF,1039,0.0,0.06063879570098976,1.2109795445398171e-107,1.201145202726658e-55,True,False,True
++Promigas,1039,0.0,6.360886414597761e-06,0.001720280283941294,0.0033164870877805635,True,True,True
++Mineros SA,1039,0.0,0.40269831014402846,2.043670452307059e-12,8.594800454999007e-08,True,False,True
++Grupo Bolivar,1039,0.0,0.3207633773609393,0.9992206620249937,0.9994181903099872,True,False,False
+diff --git a/resultados/saltos_reversibles.csv b/resultados/saltos_reversibles.csv
+new file mode 100644
+index 0000000..ff66a18
+--- /dev/null
++++ b/resultados/saltos_reversibles.csv
+@@ -0,0 +1,13 @@
++empresa,fecha_salto,ret_salto,fecha_reversion,ret_acumulado_ventana
++Ecopetrol,2025-02-19,-0.203165116380932,2025-02-20,0.0022395627068558244
++ETB,2023-09-15,-0.185479470318079,2023-09-19,1.1102230246251565e-16
++ETB,2023-09-22,-0.3317773923170052,2023-09-25,-0.06062462181643491
++ETB,2026-06-30,0.1524070002224314,2026-07-02,-0.012270092591814497
++Nutresa,2024-05-03,0.2464318790840832,2024-05-06,-8.326672684688674e-17
++Nutresa,2025-02-19,-0.2403853577487158,2025-02-20,-0.0174157346026112
++Nutresa,2025-09-30,-0.1619781697171241,2025-10-01,0.0
++Nutresa,2025-10-23,-0.1541506798272583,2025-10-27,-0.0206192872027358
++Promigas,2024-05-03,-0.2578289638101315,2024-05-06,0.007547359722472224
++Mineros SA,2024-05-03,-0.2302330332477647,2024-05-06,0.006259859468223605
++Mineros SA,2025-09-30,-0.1823216870031441,2025-10-02,0.037616868796394386
++Mineros SA,2025-12-03,-0.1745995629156136,2025-12-04,0.0
+diff --git a/src/exploratory_analysis/anomalies.py b/src/exploratory_analysis/anomalies.py
+new file mode 100644
+index 0000000..da480b5
+--- /dev/null
++++ b/src/exploratory_analysis/anomalies.py
+@@ -0,0 +1,79 @@
++"""
++anomalies.py — Saltos anómalos reversibles (Fase 4, EDA)
++=========================================================
++
++Un salto grande que se revierte casi por completo en pocos días es
++sospechoso de error de dato / precio anómalo. Este módulo SOLO detecta y
++contextualiza; no modifica ni elimina datos (DEC-009, DEC-018).
++"""
++
++import numpy as np
++import pandas as pd
++
++from config.settings import UMBRAL_SALTO_LOG, VENTANA_REVERSION_DIAS
++
++
++def detectar_saltos_reversibles(rend_log, umbral=UMBRAL_SALTO_LOG,
++                                ventana=VENTANA_REVERSION_DIAS,
++                                tolerancia=0.25):
++    """Busca |r_t| >= umbral seguido, en <= ``ventana`` días, de una
++    reversión que devuelve al menos (1 - tolerancia) del salto.
++
++    Retorna DataFrame: empresa, fecha_salto, ret_salto, fecha_reversion,
++    ret_acumulado_ventana.
++    """
++    registros = []
++    for col in rend_log.columns:
++        r = rend_log[col].dropna()
++        valores = r.to_numpy()
++        for i in np.flatnonzero(np.abs(valores) >= umbral):
++            for k in range(1, ventana + 1):
++                if i + k >= len(valores):
++                    break
++                acumulado = valores[i:i + k + 1].sum()
++                if abs(acumulado) <= tolerancia * abs(valores[i]):
++                    registros.append({
++                        "empresa": col,
++                        "fecha_salto": r.index[i],
++                        "ret_salto": float(valores[i]),
++                        "fecha_reversion": r.index[i + k],
++                        "ret_acumulado_ventana": float(acumulado),
++                    })
++                    break
++    return pd.DataFrame(registros, columns=[
++        "empresa", "fecha_salto", "ret_salto", "fecha_reversion",
++        "ret_acumulado_ventana"])
++
++
++def contexto_evento(crudo, fecha, dias=2):
++    """Filas OHLCV alrededor de ``fecha`` + indicadores de contexto.
++
++    Incluye volumen relativo a la mediana histórica y si la vela es 'plana'
++    (Open = High = Low = Close), que junto con una reversión inmediata es
++    típico de un precio anómalo aislado.
++    """
++    fecha = pd.Timestamp(fecha)
++    if fecha not in crudo.index:
++        raise KeyError(f"{fecha.date()} no está en los datos.")
++    pos = crudo.index.get_loc(fecha)
++    ventana = crudo.iloc[max(pos - dias, 0):pos + dias + 1].copy()
++    mediana = crudo["Volume"].median()
++    ventana["volumen_vs_mediana"] = ventana["Volume"] / mediana
++    ventana["vela_plana"] = ((ventana["Open"] == ventana["High"])
++                             & (ventana["High"] == ventana["Low"])
++                             & (ventana["Low"] == ventana["Close"]))
++    return ventana
++
++
++def sensibilidad_volatilidad_movil(rend_log, empresa, desde, hasta,
++                                   ventana=30, dias=252):
++    """Volatilidad móvil anualizada máxima con y sin las fechas [desde, hasta].
++
++    Solo diagnóstico: cuantifica cuánto pesa el evento en la volatilidad.
++    """
++    serie = rend_log[empresa]
++    sin = serie.copy()
++    sin.loc[desde:hasta] = np.nan
++    vol = lambda s: s.rolling(ventana, min_periods=int(ventana * 0.8)).std() * np.sqrt(dias)
++    return {"vol_max_con_evento": float(vol(serie).max()),
++            "vol_max_sin_evento": float(vol(sin).max())}
+diff --git a/src/exploratory_analysis/liquidity.py b/src/exploratory_analysis/liquidity.py
+new file mode 100644
+index 0000000..7c472e9
+--- /dev/null
++++ b/src/exploratory_analysis/liquidity.py
+@@ -0,0 +1,58 @@
++"""
++liquidity.py — Auditoría de iliquidez (Fase 4, EDA)
++====================================================
++
++Mide, por empresa y sobre los datos CRUDOS (nunca se modifican):
++
++    - % de días con precio de cierre igual al del día anterior.
++    - Racha máxima de días consecutivos sin cambio de precio.
++    - % de días con volumen cero y mediana de volumen.
++
++Compara contra umbrales de REFERENCIA (config/settings.py). Superar el umbral
++NO elimina la empresa: solo la marca para decisión del equipo (DEC-018).
++"""
++
++import pandas as pd
++
++from config.settings import UMBRAL_PCT_PRECIO_REPETIDO, UMBRAL_RACHA_MAX_DIAS
++
++
++def racha_maxima_sin_cambio(precios):
++    """Mayor número de días consecutivos en que el precio no cambió."""
++    repetido = precios.diff() == 0
++    grupos = (~repetido).cumsum()
++    if len(repetido) == 0:
++        return 0
++    return int(repetido.groupby(grupos).sum().max())
++
++
++def auditar_iliquidez(crudos, columna="Close",
++                      umbral_pct=UMBRAL_PCT_PRECIO_REPETIDO,
++                      umbral_racha=UMBRAL_RACHA_MAX_DIAS):
++    """Auditoría de iliquidez para un dict {nombre: DataFrame OHLCV}.
++
++    Retorna un DataFrame con una fila por empresa. La columna ``decision``
++    queda siempre en 'pendiente': la inclusión/exclusión la decide el equipo.
++    """
++    filas = []
++    for nombre, df in crudos.items():
++        if columna not in df.columns or "Volume" not in df.columns:
++            raise ValueError(f"{nombre}: faltan columnas '{columna}'/'Volume'.")
++        precio = df[columna].round(6)
++        pct_rep = float((precio.diff() == 0).sum() / max(len(precio) - 1, 1))
++        racha = racha_maxima_sin_cambio(precio)
++        filas.append({
++            "empresa": nombre,
++            "observaciones": len(df),
++            "pct_precio_repetido": round(pct_rep, 4),
++            "racha_max_dias": racha,
++            "pct_volumen_cero": round(float((df["Volume"] == 0).mean()), 4),
++            "mediana_volumen": float(df["Volume"].median()),
++            "incumple_pct": pct_rep > umbral_pct,
++            "incumple_racha": racha > umbral_racha,
++        })
++    res = pd.DataFrame(filas)
++    res["supera_umbral"] = res["incumple_pct"] | res["incumple_racha"]
++    res["decision"] = "pendiente"
++    return res.sort_values("pct_precio_repetido", ascending=False,
++                           ignore_index=True)
+diff --git a/src/exploratory_analysis/stat_tests.py b/src/exploratory_analysis/stat_tests.py
+new file mode 100644
+index 0000000..4f0db83
+--- /dev/null
++++ b/src/exploratory_analysis/stat_tests.py
+@@ -0,0 +1,60 @@
++"""
++stat_tests.py — Pruebas formales sobre rendimientos (Fase 4, EDA)
++=================================================================
++
++Justifican (o no) los modelos de la Fase 7:
++    - Normalidad: Jarque-Bera.
++    - Estacionariedad: ADF (H0: raíz unitaria) y KPSS (H0: estacionaria).
++    - Autocorrelación: Ljung-Box sobre r_t  -> orden ARIMA.
++    - Efectos ARCH: Ljung-Box sobre r_t^2 y ARCH-LM -> justifica GARCH.
++
++USAR SOLO SOBRE EL BLOQUE DE ENTRENAMIENTO (ver split.py, DEC-017).
++
++Nota: el p-valor de KPSS está truncado a [0.01, 0.10] por construcción.
++"""
++
++import warnings
++
++import pandas as pd
++from scipy import stats
++from statsmodels.stats.diagnostic import acorr_ljungbox, het_arch
++from statsmodels.tools.sm_exceptions import InterpolationWarning
++from statsmodels.tsa.stattools import adfuller, kpss
++
++from config.settings import NIVEL_SIGNIFICANCIA
++
++
++def pruebas_estacionariedad(df, alfa=NIVEL_SIGNIFICANCIA):
++    filas = []
++    for col in df.columns:
++        s = df[col].dropna()
++        adf_p = adfuller(s, autolag="AIC", result_object=False)[1]
++        with warnings.catch_warnings():
++            # KPSS trunca el p-valor a [0.01, 0.10] (tabla de valores críticos).
++            warnings.simplefilter("ignore", InterpolationWarning)
++            kpss_p = kpss(s, regression="c", nlags="auto",
++                          result_object=False)[1]
++        filas.append({"serie": col, "n": len(s), "adf_pvalor": adf_p,
++                      "kpss_pvalor": kpss_p,
++                      "adf_rechaza_raiz_unitaria": adf_p < alfa,
++                      "kpss_rechaza_estacionariedad": kpss_p < alfa})
++    return pd.DataFrame(filas)
++
++
++def pruebas_rendimientos(rend_log, rezagos=10, alfa=NIVEL_SIGNIFICANCIA):
++    filas = []
++    for col in rend_log.columns:
++        r = rend_log[col].dropna()
++        jb_p = stats.jarque_bera(r).pvalue
++        lb_r = acorr_ljungbox(r, lags=[rezagos])["lb_pvalue"].iloc[0]
++        lb_r2 = acorr_ljungbox(r ** 2, lags=[rezagos])["lb_pvalue"].iloc[0]
++        arch_p = het_arch(r, nlags=rezagos, result_object=False)[1]
++        filas.append({
++            "serie": col, "n": len(r),
++            "jb_pvalor": jb_p, "lb_r_pvalor": lb_r,
++            "lb_r2_pvalor": lb_r2, "arch_lm_pvalor": arch_p,
++            "no_normal": jb_p < alfa,
++            "autocorrelacion": lb_r < alfa,
++            "efecto_arch": (lb_r2 < alfa) or (arch_p < alfa),
++        })
++    return pd.DataFrame(filas)
+diff --git a/src/pipeline.py b/src/pipeline.py
+index 0b4600b..b4d96e8 100644
+--- a/src/pipeline.py
++++ b/src/pipeline.py
+@@ -1,5 +1,5 @@
+ """
+-pipeline.py — Punto de entrada de las Fases 2, 3 y 3.5
++pipeline.py — Punto de entrada de las Fases 2, 3, 3.5 y 4
+ ======================================================
+ 
+ Orquesta el flujo completo reproducible:
+@@ -233,6 +233,80 @@ def etapa_exploratoria(conjunto, reporte_calidad):
+     return resumen
+ 
+ 
++def etapa_fase4(conjunto):
++    """Fase 4 (EDA): partición temporal, iliquidez, saltos reversibles y pruebas.
++
++    NO modifica ni elimina datos: solo genera reportes (DEC-017, DEC-018).
++    """
++    from config.settings import FECHA_FIN_TRAIN, FECHA_FIN_VALIDACION
++    from src.data.data_manager import cargar_datos_crudos
++    from src.preprocessing.split import particion_temporal, resumen_particion
++    from src.exploratory_analysis.liquidity import auditar_iliquidez
++    from src.exploratory_analysis.anomalies import (
++        detectar_saltos_reversibles,
++        contexto_evento,
++    )
++    from src.exploratory_analysis.stat_tests import (
++        pruebas_estacionariedad,
++        pruebas_rendimientos,
++    )
++
++    RUTA_RESULTADOS.mkdir(parents=True, exist_ok=True)
++    rend_log = conjunto["rend_log"]
++    precios = conjunto["precios"]
++
++    # 1. Partición temporal (solo se registra; el test queda intocable).
++    part = particion_temporal(rend_log, FECHA_FIN_TRAIN, FECHA_FIN_VALIDACION)
++    resumen_particion(part).to_csv(RUTA_RESULTADOS / "particion_temporal.csv",
++                                   index=False, encoding="utf-8")
++
++    # 2. Iliquidez sobre datos crudos (umbrales de referencia).
++    crudos = cargar_datos_crudos()
++    iliq = auditar_iliquidez(crudos)
++    iliq.to_csv(RUTA_RESULTADOS / "auditoria_iliquidez_umbral.csv",
++                index=False, encoding="utf-8")
++    logger.info("Empresas que superan el umbral de iliquidez: %s",
++                ", ".join(iliq.loc[iliq["supera_umbral"], "empresa"]))
++
++    # 3. Saltos reversibles (posibles precios anómalos) + contexto OHLCV.
++    saltos = detectar_saltos_reversibles(rend_log)
++    saltos.to_csv(RUTA_RESULTADOS / "saltos_reversibles.csv",
++                  index=False, encoding="utf-8")
++    contextos = []
++    for _, fila in saltos.iterrows():
++        clave = next((k for k in crudos if k.startswith(_prefijo(fila["empresa"]))), None)
++        if clave is None:
++            continue
++        ctx = contexto_evento(crudos[clave], fila["fecha_salto"]).reset_index()
++        ctx.insert(0, "empresa", fila["empresa"])
++        contextos.append(ctx)
++    if contextos:
++        pd.concat(contextos).to_csv(RUTA_RESULTADOS / "contexto_saltos.csv",
++                                    index=False, encoding="utf-8")
++
++    # 4. Pruebas formales SOLO sobre entrenamiento.
++    train_r = part["train"]
++    train_p = precios.loc[precios.index <= pd.Timestamp(FECHA_FIN_TRAIN)]
++    pruebas_estacionariedad(train_p).assign(serie_tipo="precio").to_csv(
++        RUTA_RESULTADOS / "pruebas_estacionariedad_precios.csv",
++        index=False, encoding="utf-8")
++    pruebas_estacionariedad(train_r.dropna(how="all")).assign(
++        serie_tipo="rendimiento_log").to_csv(
++        RUTA_RESULTADOS / "pruebas_estacionariedad_rendimientos.csv",
++        index=False, encoding="utf-8")
++    pruebas_rendimientos(train_r).to_csv(
++        RUTA_RESULTADOS / "pruebas_rendimientos_train.csv",
++        index=False, encoding="utf-8")
++    return part
++
++
++def _prefijo(nombre_empresa):
++    """Prefijo del archivo crudo a partir del nombre de la empresa (TICKERS)."""
++    from config.settings import TICKERS
++    ticker = TICKERS.get(nombre_empresa, nombre_empresa)
++    return ticker.replace(".", "_")
++
++
+ def main():
+     _configurar_logging()
+     logger.info("=== INICIO: Fases 2, 3 y 3.5 ===")
+@@ -242,6 +316,7 @@ def main():
+     conjunto = etapa_procesamiento(resultados)
+     etapa_imputacion(resultados, conjunto)
+     resumen = etapa_exploratoria(conjunto, reporte_calidad)
++    etapa_fase4(conjunto)
+ 
+     ok = sum(1 for r in resultados.values() if r["estado"] == "ok")
+     error = sum(1 for r in resultados.values() if r["estado"] == "error")
+diff --git a/src/preprocessing/split.py b/src/preprocessing/split.py
+new file mode 100644
+index 0000000..8c725a4
+--- /dev/null
++++ b/src/preprocessing/split.py
+@@ -0,0 +1,65 @@
++"""
++split.py — Partición temporal entrenamiento / validación / prueba
++==================================================================
++
++Divide un DataFrame indexado por fecha en tres bloques CONSECUTIVOS y sin
++solapamiento. Nunca se mezclan observaciones (no hay ``train_test_split``
++aleatorio), para evitar data leakage (AGENTS.md, sección 6).
++
++Las fechas de corte se definen en ``config/settings.py`` (DEC-017).
++"""
++
++import pandas as pd
++
++
++def _validar_indice(df):
++    if not isinstance(df, (pd.DataFrame, pd.Series)):
++        raise TypeError("Se esperaba un DataFrame o Series de pandas.")
++    if not isinstance(df.index, pd.DatetimeIndex):
++        raise TypeError("El índice debe ser un DatetimeIndex.")
++    if df.index.has_duplicates:
++        raise ValueError("El índice tiene fechas duplicadas.")
++    if not df.index.is_monotonic_increasing:
++        raise ValueError("El índice no está ordenado cronológicamente.")
++
++
++def particion_temporal(df, fin_train, fin_validacion):
++    """Devuelve dict con 'train', 'validacion' y 'test'.
++
++    Reglas:
++        train      : fecha <= fin_train
++        validacion : fin_train < fecha <= fin_validacion
++        test       : fecha > fin_validacion
++
++    Lanza ValueError si las fechas de corte no son crecientes o si algún
++    bloque queda vacío (no se devuelven particiones silenciosamente vacías).
++    """
++    _validar_indice(df)
++    fin_train = pd.Timestamp(fin_train)
++    fin_validacion = pd.Timestamp(fin_validacion)
++    if not fin_train < fin_validacion:
++        raise ValueError("fin_train debe ser anterior a fin_validacion.")
++
++    train = df.loc[df.index <= fin_train]
++    validacion = df.loc[(df.index > fin_train) & (df.index <= fin_validacion)]
++    test = df.loc[df.index > fin_validacion]
++
++    for nombre, bloque in (("train", train), ("validacion", validacion),
++                           ("test", test)):
++        if len(bloque) == 0:
++            raise ValueError(f"La partición '{nombre}' quedó vacía.")
++
++    return {"train": train, "validacion": validacion, "test": test}
++
++
++def resumen_particion(particion):
++    """Tabla con inicio, fin y número de observaciones de cada bloque."""
++    filas = []
++    for nombre, bloque in particion.items():
++        filas.append({
++            "bloque": nombre,
++            "inicio": bloque.index.min(),
++            "fin": bloque.index.max(),
++            "observaciones": len(bloque),
++        })
++    return pd.DataFrame(filas)
+diff --git a/tests/test_fase4.py b/tests/test_fase4.py
+new file mode 100644
+index 0000000..31e18ab
+--- /dev/null
++++ b/tests/test_fase4.py
+@@ -0,0 +1,99 @@
++"""Tests de la Fase 4: partición temporal, iliquidez, saltos y pruebas."""
++
++import numpy as np
++import pandas as pd
++import pytest
++
++from src.preprocessing.split import particion_temporal
++from src.exploratory_analysis.liquidity import (
++    racha_maxima_sin_cambio,
++    auditar_iliquidez,
++)
++from src.exploratory_analysis.anomalies import (
++    detectar_saltos_reversibles,
++    sensibilidad_volatilidad_movil,
++)
++from src.exploratory_analysis.stat_tests import pruebas_rendimientos
++
++
++def _df(n=300):
++    idx = pd.date_range("2022-01-03", periods=n, freq="B")
++    return pd.DataFrame({"a": np.arange(n, dtype=float)}, index=idx)
++
++
++def test_particion_es_cronologica_y_sin_solape():
++    df = _df()
++    p = particion_temporal(df, "2022-06-30", "2022-12-31")
++    assert p["train"].index.max() < p["validacion"].index.min()
++    assert p["validacion"].index.max() < p["test"].index.min()
++    assert sum(len(b) for b in p.values()) == len(df)
++
++
++def test_particion_rechaza_cortes_invalidos_o_bloques_vacios():
++    df = _df()
++    with pytest.raises(ValueError):
++        particion_temporal(df, "2022-12-31", "2022-06-30")
++    with pytest.raises(ValueError):
++        particion_temporal(df, "2010-01-01", "2010-06-30")
++
++
++def test_particion_rechaza_indice_desordenado():
++    df = _df().iloc[::-1]
++    with pytest.raises(ValueError):
++        particion_temporal(df, "2022-06-30", "2022-12-31")
++
++
++def test_racha_maxima():
++    s = pd.Series([1, 1, 1, 1, 2, 2, 3, 3, 3.0])
++    assert racha_maxima_sin_cambio(s) == 3
++
++
++def test_auditar_iliquidez_marca_pero_no_decide():
++    idx = pd.date_range("2024-01-01", periods=100, freq="B")
++    ilíquida = pd.DataFrame({"Close": 10.0, "Volume": 0}, index=idx)
++    liquida = pd.DataFrame(
++        {"Close": np.linspace(10, 20, 100), "Volume": 1000}, index=idx)
++    res = auditar_iliquidez({"ilíquida": ilíquida, "líquida": liquida})
++    fila = res.set_index("empresa")
++    assert fila.loc["ilíquida", "supera_umbral"]
++    assert not fila.loc["líquida", "supera_umbral"]
++    assert (res["decision"] == "pendiente").all()
++
++
++def test_salto_reversible_detectado_y_no_modifica_datos():
++    idx = pd.date_range("2024-01-01", periods=30, freq="B")
++    r = pd.Series(0.001, index=idx)
++    r.iloc[10] = -0.26
++    r.iloc[11] = 0.265
++    df = pd.DataFrame({"X": r})
++    copia = df.copy()
++    saltos = detectar_saltos_reversibles(df)
++    assert len(saltos) == 1
++    assert saltos.iloc[0]["fecha_salto"] == idx[10]
++    pd.testing.assert_frame_equal(df, copia)
++
++
++def test_salto_sin_reversion_no_se_marca():
++    idx = pd.date_range("2024-01-01", periods=30, freq="B")
++    r = pd.Series(0.001, index=idx)
++    r.iloc[10] = 0.30  # cambio de nivel real, sin reversión
++    assert detectar_saltos_reversibles(pd.DataFrame({"X": r})).empty
++
++
++def test_sensibilidad_volatilidad_baja_sin_el_evento():
++    idx = pd.date_range("2024-01-01", periods=120, freq="B")
++    rng = np.random.default_rng(42)
++    r = pd.Series(rng.normal(0, 0.01, 120), index=idx)
++    r.iloc[60], r.iloc[61] = -0.26, 0.265
++    out = sensibilidad_volatilidad_movil(
++        pd.DataFrame({"X": r}), "X", idx[60], idx[61])
++    assert out["vol_max_sin_evento"] < out["vol_max_con_evento"]
++
++
++def test_pruebas_rendimientos_devuelve_una_fila_por_serie():
++    rng = np.random.default_rng(42)
++    df = pd.DataFrame({"A": rng.normal(0, 0.01, 400),
++                       "B": rng.normal(0, 0.02, 400)})
++    res = pruebas_rendimientos(df)
++    assert list(res["serie"]) == ["A", "B"]
++    assert res["jb_pvalor"].between(0, 1).all()

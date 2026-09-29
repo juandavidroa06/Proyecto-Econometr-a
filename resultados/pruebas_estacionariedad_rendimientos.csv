@@ -1,0 +1,10 @@
+serie,n,adf_pvalor,kpss_pvalor,adf_rechaza_raiz_unitaria,kpss_rechaza_estacionariedad,serie_tipo
+Celsia,1039,0.0,0.1,True,False,rendimiento_log
+Banco de Bogota,1039,1.0789945852524195e-14,0.1,True,False,rendimiento_log
+Ecopetrol,1039,2.440822560541918e-13,0.1,True,False,rendimiento_log
+ETB,1039,5.378629855037719e-13,0.1,True,False,rendimiento_log
+Nutresa,1042,1.0607263970527234e-13,0.1,True,False,rendimiento_log
+Banco Davivienda PF,1039,0.0,0.1,True,False,rendimiento_log
+Promigas,1039,0.0,0.1,True,False,rendimiento_log
+Mineros SA,1039,0.0,0.1,True,False,rendimiento_log
+Grupo Bolivar,1039,3.2603322135464566e-30,0.1,True,False,rendimiento_log

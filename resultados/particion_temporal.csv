@@ -1,0 +1,4 @@
+bloque,inicio,fin,observaciones
+train,2020-01-01,2023-12-29,1043
+validacion,2024-01-01,2024-12-31,255
+test,2025-01-02,2026-09-14,426

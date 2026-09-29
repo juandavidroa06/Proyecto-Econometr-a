@@ -79,8 +79,15 @@ AJUSTE_INFLACION = False  # [PLACEHOLDER] — Decidir si se aplica ajuste
 # CONFIGURACIÓN DE DIVISIÓN TEMPORAL
 # =============================================================================
 
-# Porcentajes para train/validation/test
-# Nota: La división será temporal (no aleatoria) para respetar el orden.
+# DEC-017: la partición se define por FECHAS de corte (no por proporciones),
+# para que sea explícita y reproducible. Siempre cronológica, nunca aleatoria.
+#   train      : fecha <= FECHA_FIN_TRAIN
+#   validación : FECHA_FIN_TRAIN < fecha <= FECHA_FIN_VALIDACION
+#   test       : fecha  > FECHA_FIN_VALIDACION  (intocable hasta la evaluación)
+FECHA_FIN_TRAIN = "2023-12-31"
+FECHA_FIN_VALIDACION = "2024-12-31"
+
+# [OBSOLETO tras DEC-017] Se conservan solo por compatibilidad con tests previos.
 PROPORCION_TRAIN = 0.70
 PROPORCION_VALIDACION = 0.15
 PROPORCION_TEST = 0.15
@@ -98,6 +105,14 @@ PERCENTIL_OUTLIER_ALTA = 0.99
 
 # Umbral de z-score para detección exploratoria de valores extremos
 UMBRAL_ZSCORE = 3.0
+
+# Auditoría de iliquidez (umbrales de REFERENCIA, no de exclusión; DEC-018)
+UMBRAL_PCT_PRECIO_REPETIDO = 0.20   # % de días con precio igual al anterior
+UMBRAL_RACHA_MAX_DIAS = 15          # racha máxima de días sin cambio de precio
+
+# Detección de saltos reversibles (posibles precios anómalos; DEC-018)
+UMBRAL_SALTO_LOG = 0.15             # |rendimiento log| mínimo para revisar
+VENTANA_REVERSION_DIAS = 3          # días para que el salto se revierta
 
 # =============================================================================
 # CONFIGURACIÓN DE VISUALIZACIÓN

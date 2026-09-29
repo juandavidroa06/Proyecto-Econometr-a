@@ -1,6 +1,6 @@
 # Portafolio Colombiano — Proyecto de Econometría
 
-> **Estado del proyecto:** En desarrollo — Fases 1, 2, 3 y 3.5 completadas
+> **Estado del proyecto:** En desarrollo — Fases 1, 2, 3 y 3.5 completadas; Fase 4 en curso
 > **Última actualización:** Septiembre 2026
 
 ---
@@ -78,6 +78,7 @@ Fases completadas:
 2. **Fase 2 — Adquisición y validación:** descarga de datos desde Yahoo Finance, guardado de datos crudos, metadatos y reporte de calidad.
 3. **Fase 3 — Preparación y análisis exploratorio:** cálculo de rendimientos (simple y logarítmico), estadística descriptiva, volatilidad, correlaciones, gráficos y detección de outliers.
 4. **Fase 3.5 — Auditoría e imputación:** auditoría de tickers y de calidad, formalización de buenas prácticas (`AGENTS.md`), e **imputación del valor faltante con Filtro de Kalman** (con bandera de imputación y validación MAE/RMSE).
+5. **Fase 4 — EDA con partición temporal (en curso):** partición cronológica por fechas (DEC-017), auditoría de iliquidez, detección de saltos reversibles, pruebas formales (Jarque-Bera, ADF/KPSS, Ljung-Box, ARCH-LM) sobre entrenamiento. Hallazgo abierto: DEC-018.
 
 Empresas incluidas (tickers de Yahoo Finance):
 

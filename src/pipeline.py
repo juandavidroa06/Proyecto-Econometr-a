@@ -1,5 +1,5 @@
 """
-pipeline.py — Punto de entrada de las Fases 2, 3 y 3.5
+pipeline.py — Punto de entrada de las Fases 2, 3, 3.5 y 4
 ======================================================
 
 Orquesta el flujo completo reproducible:
@@ -233,6 +233,80 @@ def etapa_exploratoria(conjunto, reporte_calidad):
     return resumen
 
 
+def etapa_fase4(conjunto):
+    """Fase 4 (EDA): partición temporal, iliquidez, saltos reversibles y pruebas.
+
+    NO modifica ni elimina datos: solo genera reportes (DEC-017, DEC-018).
+    """
+    from config.settings import FECHA_FIN_TRAIN, FECHA_FIN_VALIDACION
+    from src.data.data_manager import cargar_datos_crudos
+    from src.preprocessing.split import particion_temporal, resumen_particion
+    from src.exploratory_analysis.liquidity import auditar_iliquidez
+    from src.exploratory_analysis.anomalies import (
+        detectar_saltos_reversibles,
+        contexto_evento,
+    )
+    from src.exploratory_analysis.stat_tests import (
+        pruebas_estacionariedad,
+        pruebas_rendimientos,
+    )
+
+    RUTA_RESULTADOS.mkdir(parents=True, exist_ok=True)
+    rend_log = conjunto["rend_log"]
+    precios = conjunto["precios"]
+
+    # 1. Partición temporal (solo se registra; el test queda intocable).
+    part = particion_temporal(rend_log, FECHA_FIN_TRAIN, FECHA_FIN_VALIDACION)
+    resumen_particion(part).to_csv(RUTA_RESULTADOS / "particion_temporal.csv",
+                                   index=False, encoding="utf-8")
+
+    # 2. Iliquidez sobre datos crudos (umbrales de referencia).
+    crudos = cargar_datos_crudos()
+    iliq = auditar_iliquidez(crudos)
+    iliq.to_csv(RUTA_RESULTADOS / "auditoria_iliquidez_umbral.csv",
+                index=False, encoding="utf-8")
+    logger.info("Empresas que superan el umbral de iliquidez: %s",
+                ", ".join(iliq.loc[iliq["supera_umbral"], "empresa"]))
+
+    # 3. Saltos reversibles (posibles precios anómalos) + contexto OHLCV.
+    saltos = detectar_saltos_reversibles(rend_log)
+    saltos.to_csv(RUTA_RESULTADOS / "saltos_reversibles.csv",
+                  index=False, encoding="utf-8")
+    contextos = []
+    for _, fila in saltos.iterrows():
+        clave = next((k for k in crudos if k.startswith(_prefijo(fila["empresa"]))), None)
+        if clave is None:
+            continue
+        ctx = contexto_evento(crudos[clave], fila["fecha_salto"]).reset_index()
+        ctx.insert(0, "empresa", fila["empresa"])
+        contextos.append(ctx)
+    if contextos:
+        pd.concat(contextos).to_csv(RUTA_RESULTADOS / "contexto_saltos.csv",
+                                    index=False, encoding="utf-8")
+
+    # 4. Pruebas formales SOLO sobre entrenamiento.
+    train_r = part["train"]
+    train_p = precios.loc[precios.index <= pd.Timestamp(FECHA_FIN_TRAIN)]
+    pruebas_estacionariedad(train_p).assign(serie_tipo="precio").to_csv(
+        RUTA_RESULTADOS / "pruebas_estacionariedad_precios.csv",
+        index=False, encoding="utf-8")
+    pruebas_estacionariedad(train_r.dropna(how="all")).assign(
+        serie_tipo="rendimiento_log").to_csv(
+        RUTA_RESULTADOS / "pruebas_estacionariedad_rendimientos.csv",
+        index=False, encoding="utf-8")
+    pruebas_rendimientos(train_r).to_csv(
+        RUTA_RESULTADOS / "pruebas_rendimientos_train.csv",
+        index=False, encoding="utf-8")
+    return part
+
+
+def _prefijo(nombre_empresa):
+    """Prefijo del archivo crudo a partir del nombre de la empresa (TICKERS)."""
+    from config.settings import TICKERS
+    ticker = TICKERS.get(nombre_empresa, nombre_empresa)
+    return ticker.replace(".", "_")
+
+
 def main():
     _configurar_logging()
     logger.info("=== INICIO: Fases 2, 3 y 3.5 ===")
@@ -242,6 +316,7 @@ def main():
     conjunto = etapa_procesamiento(resultados)
     etapa_imputacion(resultados, conjunto)
     resumen = etapa_exploratoria(conjunto, reporte_calidad)
+    etapa_fase4(conjunto)
 
     ok = sum(1 for r in resultados.values() if r["estado"] == "ok")
     error = sum(1 for r in resultados.values() if r["estado"] == "error")

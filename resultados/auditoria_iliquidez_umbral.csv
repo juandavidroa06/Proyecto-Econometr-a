@@ -1,0 +1,10 @@
+empresa,observaciones,pct_precio_repetido,racha_max_dias,pct_volumen_cero,mediana_volumen,incumple_pct,incumple_racha,supera_umbral,decision
+ETB_CL,1714,0.6089,67,0.0828,79651.5,True,True,True,pendiente
+PROMIGAS_CL,1713,0.3271,9,0.073,13283.0,True,False,True,pendiente
+NUTRESA_CL,1716,0.3096,22,0.12,4453.5,True,True,True,pendiente
+GRUBOLIVAR_CL,1716,0.2723,11,0.0781,1878.5,True,False,True,pendiente
+MINEROS_CL,1718,0.2044,20,0.1013,80204.0,True,True,True,pendiente
+BOGOTA_CL,1715,0.182,8,0.0729,6341.0,False,False,False,pendiente
+PFDAVVNDA_CL,1714,0.1454,3,0.0671,35033.0,False,False,False,pendiente
+CELSIA_CL,1717,0.1404,3,0.0699,134325.0,False,False,False,pendiente
+ECOPETROL_CL,1715,0.1138,3,0.0676,6774011.0,False,False,False,pendiente
