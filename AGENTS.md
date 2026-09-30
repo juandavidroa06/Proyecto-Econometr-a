@@ -75,6 +75,14 @@ dato crudo -> validación -> transformación -> dato procesado -> resultado
 - Distinguir **análisis retrospectivo** de **predicción en tiempo real**.
 - No interpretar correlación como causalidad.
 
+### Prueba congelada (Fase 5, DEC-019)
+
+- Las fases de modelado cargan datos con `cargar_entrenamiento_validacion()` (`src/preprocessing/split.py`), que **no expone** la prueba. No leer `rendimientos_log.csv` ni `precios.csv` completos para entrenar o decidir.
+- Todo estimador o transformación (media, covarianza, escalado, selección de variables, hiperparámetros) se ajusta **solo con entrenamiento**; la validación sirve para elegir modelos.
+- El bloque de prueba (2025 en adelante) se abre **una sola vez**, en un módulo de evaluación final (`evaluacion_final.py`), con `confirmar_evaluacion_final=True`. Un test automático (`tests/test_particiones_reales.py`) falla si otro módulo de `src` lo abre.
+- Los resultados exploratorios de la Fase 3 (`estadisticas_descriptivas`, `matriz_correlacion`, `volatilidades`, outliers) se calcularon con toda la muestra: no usarlos para decidir; recalcular con entrenamiento cuando se necesiten.
+- Criterios de inclusión o exclusión de empresas (liquidez, calidad de datos) se evalúan con entrenamiento (y validación), no con la prueba.
+
 ## 7. Machine Learning (fases futuras)
 
 - `train/validation/test` respetan el tiempo.

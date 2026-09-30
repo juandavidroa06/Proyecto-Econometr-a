@@ -129,6 +129,16 @@ def cargar_particion(carpeta, nombre_base, bloque, confirmar_evaluacion_final=Fa
                        float_precision="round_trip")
 
 
+def cargar_entrenamiento_validacion(carpeta, nombre_base):
+    """Carga SOLO entrenamiento y validación (punto de entrada para modelar).
+
+    Las fases de modelado (ARIMA, GARCH, ML, LSTM) deben usar esta función:
+    no expone el bloque de prueba.
+    """
+    return {bloque: cargar_particion(carpeta, nombre_base, bloque)
+            for bloque in ("train", "validacion")}
+
+
 def huella(df):
     """SHA-256 del contenido (independiente del sistema operativo)."""
     texto = df.to_csv(lineterminator="\n")
