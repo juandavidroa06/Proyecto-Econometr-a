@@ -300,6 +300,41 @@ def etapa_fase4(conjunto):
     return part
 
 
+def etapa_fase5(conjunto):
+    """Fase 5: congela la partición temporal en archivos y verifica el orden.
+
+    Guarda train / validación / test de rendimientos log y precios en
+    ``datos/particiones/`` junto con una huella SHA-256 de cada bloque
+    (DEC-019). No modifica datos: solo reparte por fechas de corte.
+    """
+    from config.settings import FECHA_FIN_TRAIN, FECHA_FIN_VALIDACION
+    from config.environment import RUTA_PARTICIONES
+    from src.preprocessing.split import (
+        NOMBRES_BLOQUES,
+        particion_temporal,
+        verificar_sin_leakage,
+        guardar_particiones,
+        guardar_huellas,
+        huella,
+    )
+
+    series = {"rendimientos_log": conjunto["rend_log"],
+              "precios": conjunto["precios"]}
+    huellas = {}
+    part_rend = None
+    for nombre_base, df in series.items():
+        part = particion_temporal(df, FECHA_FIN_TRAIN, FECHA_FIN_VALIDACION)
+        verificar_sin_leakage(part, df)
+        guardar_particiones(part, RUTA_PARTICIONES, nombre_base)
+        for bloque in NOMBRES_BLOQUES:
+            huellas[f"{nombre_base}_{bloque}"] = huella(part[bloque])
+        if nombre_base == "rendimientos_log":
+            part_rend = part
+    guardar_huellas(huellas, RUTA_PARTICIONES / "huellas.json")
+    logger.info("Fase 5: particiones guardadas en %s", RUTA_PARTICIONES)
+    return part_rend
+
+
 def _prefijo(nombre_empresa):
     """Prefijo del archivo crudo a partir del nombre de la empresa (TICKERS)."""
     from config.settings import TICKERS
@@ -317,6 +352,7 @@ def main():
     etapa_imputacion(resultados, conjunto)
     resumen = etapa_exploratoria(conjunto, reporte_calidad)
     etapa_fase4(conjunto)
+    etapa_fase5(conjunto)
 
     ok = sum(1 for r in resultados.values() if r["estado"] == "ok")
     error = sum(1 for r in resultados.values() if r["estado"] == "error")

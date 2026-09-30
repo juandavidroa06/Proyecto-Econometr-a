@@ -274,4 +274,18 @@ Cada decisión se registra con el siguiente formato:
 
 ---
 
+### DEC-019: Fase 5 — Congelación y blindaje de la partición temporal
+
+- **Fecha:** 2026-09-30
+- **Fase:** Fase 5 — Separación entrenamiento / validación / prueba
+- **Decisión:** La partición cronológica propuesta en DEC-017 se formaliza y se guarda en archivos separados dentro de `datos/particiones/` (rendimientos log y precios, cada uno en `_train`, `_validacion` y `_test`). Cortes: entrenamiento hasta 2023-12-31 (1 043 obs.), validación 2024 (255 obs.) y prueba desde 2025-01-01 (426 obs. con los datos al 2026-09-14). Se agregan: (1) `verificar_sin_leakage` (orden, sin solape, sin pérdida de filas); (2) `cargar_particion`, que exige `confirmar_evaluacion_final=True` para leer el bloque de prueba; (3) huellas SHA-256 por bloque en `datos/particiones/huellas.json` para detectar alteraciones; (4) tests anti-leakage en `tests/test_particion_fase5.py`.
+- **Motivo:** Evitar data leakage. Nunca se usa partición aleatoria en series de tiempo: mezclaría pasado y futuro. La prueba (2025 en adelante) debe permanecer intocable hasta la evaluación final; ninguna transformación, imputación, selección de empresas ni ajuste de hiperparámetros puede usar sus datos.
+- **Regla operativa:** Todo estimador (media, covarianza, escalado, modelos) se ajusta solo con entrenamiento; la validación sirve para elegir modelos e hiperparámetros; la prueba se lee una sola vez, al final.
+- **Alternativas consideradas:** Partición aleatoria 80/20 (rechazada: leakage); proporciones 70/15/15 (rechazada en DEC-017: el corte se mueve con la fecha de ejecución).
+- **Evidencia utilizada:** `resultados/particion_temporal.csv`; `datos/particiones/huellas.json`; 10 tests nuevos (56 en total).
+- **Puntos abiertos:** (a) `FECHA_FIN = None` hace que el bloque de prueba crezca cada vez que se vuelven a descargar los datos; conviene fijar una fecha final de muestra antes de la evaluación final. (b) El evento del 2024-05-03 (DEC-018) cae en validación. (c) Con un solo bloque de prueba (2025 en adelante) la evaluación final tiene un único escenario; el backtesting walk-forward de fases posteriores lo complementará.
+- **Estado:** Pendiente de aprobación del equipo (depende de la aprobación de las fechas de DEC-017).
+
+---
+
 *Las decisiones siguientes se registrarán conforme avance el proyecto.*
