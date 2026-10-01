@@ -289,4 +289,21 @@ Cada decisión se registra con el siguiente formato:
 
 ---
 
+### DEC-020: Fase 6 — Benchmark de Markowitz
+
+- **Fecha:** 2026-10-01
+- **Fase:** Fase 6 — Modelo de referencia
+- **Decisión:** Se construye el benchmark con `src/portfolio/` (`markowitz.py`, `metricas.py`, `fase6.py`). Media y covarianza se estiman **solo con entrenamiento** (rendimientos simples, R = exp(r) − 1, anualizados con 252 días); los pesos quedan fijos y se evalúan en entrenamiento (dentro de muestra) y validación (fuera de muestra). Portafolios: igual ponderación (1/N), mínima varianza y máximo Sharpe. Restricciones: suma 1, sin cortos, peso máximo 30 % por activo. Dos universos: las 9 empresas y las 4 líquidas según entrenamiento (Celsia, Banco de Bogotá, Ecopetrol, Davivienda PF).
+- **Motivo:** Tener un punto de comparación antes de ARIMA/GARCH/ML/LSTM, sin tocar la prueba.
+- **Criterio de liquidez:** proporción de rendimientos exactamente cero en entrenamiento, umbral 20 % (el mismo de DEC-018). Quedan como ilíquidas ETB, Grupo Bolívar, Promigas, Nutresa y Mineros. Nutresa (20,7 %) y Mineros (20,1 %) están al borde del umbral: la clasificación es frágil.
+- **Faltantes:** se descartan filas completas con algún NaN (4 en entrenamiento y 8 en validación para las 9 empresas); no se imputa. Los NaN de 2023-06-09 y 2023-06-12 y otras fechas son días sin precio en Yahoo para 8 de 9 acciones (Nutresa trae el precio repetido).
+- **Supuesto provisional:** tasa libre de riesgo = 0 (`TASA_LIBRE_RIESGO_ANUAL`, [PLACEHOLDER]); no hay serie de tasas en el proyecto. El Sharpe absoluto no es comparable con el mercado real hasta sustituirla.
+- **Hallazgos (no son conclusiones):** (1) En entrenamiento el retorno medio de casi todas las acciones es cercano a cero o negativo; con las 4 líquidas ningún portafolio factible supera la tasa libre de riesgo (Sharpe máximo −0,04), así que el "máximo Sharpe" es degenerado. (2) En validación (2024, año alcista) el orden se invierte respecto a entrenamiento: el máximo Sharpe fue el mejor dentro de muestra y el peor de los tres fuera de muestra en el universo de 9, lo que es consistente con error de estimación de la media. (3) El máximo Sharpe con 9 empresas pone 30 % en Nutresa y 30 % en Ecopetrol; Nutresa es una de las acciones con saltos reversibles (DEC-018). (4) Validación incluye el evento del 2024-05-03; no se modificó.
+- **Alternativas consideradas:** usar rendimientos logarítmicos directamente (rechazada: no agregan linealmente en el portafolio); imputar faltantes (rechazada: AGENTS.md); elegir el portafolio de referencia mirando validación (rechazada: sesgo de selección).
+- **Evidencia utilizada:** `resultados/fase6_pesos.csv`, `fase6_metricas.csv`, `fase6_parametros_train.csv`, `fase6_universo_liquidez_train.csv`, `resultados/graficos/fase6_frontera_eficiente.png`; `tests/test_markowitz_fase6.py`.
+- **Puntos abiertos:** (a) El equipo debe fijar, **antes** de mirar más resultados, cuál portafolio es "el benchmark" (la propuesta: mínima varianza por ser más estable que máximo Sharpe, con 1/N como referencia). (b) Sustituir la tasa libre de riesgo. (c) Sin clasificación sectorial en el repo no se aplicaron límites por sector. (d) Resolver DEC-018 antes de congelar resultados.
+- **Estado:** Pendiente de aprobación del equipo.
+
+---
+
 *Las decisiones siguientes se registrarán conforme avance el proyecto.*

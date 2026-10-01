@@ -115,6 +115,19 @@ UMBRAL_SALTO_LOG = 0.15             # |rendimiento log| mínimo para revisar
 VENTANA_REVERSION_DIAS = 3          # días para que el salto se revierta
 
 # =============================================================================
+# CONFIGURACIÓN DE PORTAFOLIOS (Fase 6 — Markowitz, DEC-020)
+# =============================================================================
+
+# Peso máximo por activo (restricción realista; w_i <= 30 %).
+PESO_MAXIMO_ACTIVO = 0.30
+
+# Tasa libre de riesgo ANUAL para el Sharpe.
+# [PLACEHOLDER] No hay serie de tasas en el proyecto todavía (variables macro
+# pendientes). 0.0 es un supuesto provisional que FAVORECE el Sharpe de todos
+# los portafolios por igual; sustituir por una tasa real antes del informe.
+TASA_LIBRE_RIESGO_ANUAL = 0.0
+
+# =============================================================================
 # CONFIGURACIÓN DE VISUALIZACIÓN
 # =============================================================================
 
