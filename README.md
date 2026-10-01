@@ -1,6 +1,6 @@
 # Portafolio Colombiano — Proyecto de Econometría
 
-> **Estado del proyecto:** En desarrollo — Fases 1, 2, 3, 3.5, 4 y 5 completadas (decisiones DEC-017, DEC-018 y DEC-019 pendientes de revisión del equipo)
+> **Estado del proyecto:** En desarrollo — Fases 1, 2, 3, 3.5, 4, 5 y 6
 > **Última actualización:** Septiembre 2026
 
 ---
@@ -78,8 +78,9 @@ Fases completadas:
 2. **Fase 2 — Adquisición y validación:** descarga de datos desde Yahoo Finance, guardado de datos crudos, metadatos y reporte de calidad.
 3. **Fase 3 — Preparación y análisis exploratorio:** cálculo de rendimientos (simple y logarítmico), estadística descriptiva, volatilidad, correlaciones, gráficos y detección de outliers.
 4. **Fase 3.5 — Auditoría e imputación:** auditoría de tickers y de calidad, formalización de buenas prácticas (`AGENTS.md`), e **imputación del valor faltante con Filtro de Kalman** (con bandera de imputación y validación MAE/RMSE).
-5. **Fase 4 — EDA con partición temporal (completada):** partición cronológica por fechas (DEC-017), auditoría de iliquidez, detección de saltos reversibles, pruebas formales (Jarque-Bera, ADF/KPSS, Ljung-Box, ARCH-LM) sobre entrenamiento. Hallazgo abierto: DEC-018.
-6. **Fase 5 — Separación entrenamiento / validación / prueba (completada):** partición cronológica guardada en `datos/particiones/` (entrenamiento hasta 2023, validación 2024, prueba desde 2025), verificación anti-leakage, huellas SHA-256 y acceso controlado al bloque de prueba (DEC-019) y auditoría automática sobre los archivos reales (`tests/test_particiones_reales.py`).
+5. **Fase 4 — EDA con partición temporal (en curso):** partición cronológica por fechas (DEC-017), auditoría de iliquidez, detección de saltos reversibles, pruebas formales (Jarque-Bera, ADF/KPSS, Ljung-Box, ARCH-LM) sobre entrenamiento. Hallazgo abierto: DEC-018.
+6. **Fase 5 — Separación entrenamiento / validación / prueba (en curso):** partición cronológica guardada en `datos/particiones/` (entrenamiento hasta 2023, validación 2024, prueba desde 2025), verificación anti-leakage, huellas SHA-256 y acceso controlado al bloque de prueba (DEC-019).
+7. **Fase 6 — Modelo de referencia, Markowitz (completada):** benchmark con portafolios de igual ponderación (1/N), mínima varianza y máximo Sharpe, estimados solo con entrenamiento y evaluados en entrenamiento y validación, con restricciones de suma 1, sin posiciones cortas y peso máximo de 30 % por activo (DEC-020). Código en `src/portfolio/`; se ejecuta con `python -m src.portfolio.fase6`. No se usó el bloque de prueba. Pendiente: definir cuál portafolio es el benchmark oficial y la tasa libre de riesgo (hoy 0, provisional).
 
 Empresas incluidas (tickers de Yahoo Finance):
 
