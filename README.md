@@ -1,7 +1,7 @@
 # Portafolio Colombiano — Proyecto de Econometría
 
-> **Estado del proyecto:** En desarrollo — Fases 1, 2, 3, 3.5, 4, 5 y 6
-> **Última actualización:** Septiembre 2026
+> **Estado del proyecto:** En desarrollo — Fases 0 a 6 implementadas; siguiente: Fase 7 (Econometría)
+> **Última actualización:** Octubre 2026
 
 ---
 
@@ -15,21 +15,32 @@ Estudiar si la integración de técnicas de distintas disciplinas —estadístic
 
 ## Metodología general
 
-El proyecto se desarrolla en las siguientes fases:
+Datos → Estadística → Econometría → IA → Riesgo → Optimización → Backtesting → Agente IA → Informe
 
-1. **Selección de activos** — Definición de empresas y criterios de inclusión.
-2. **Obtención de datos** — Descarga y validación de series de precios.
-3. **Limpieza y calidad** — Manejo de datos faltantes, duplicados y outliers.
-4. **Análisis exploratorio** — Estadísticas descriptivas y visualización.
-5. **Análisis estadístico** — Distribuciones, correlaciones y pruebas formales.
-6. **Econometría** — Modelos de series de tiempo (ARIMA, GARCH, VAR, cointegración).
-7. **Machine Learning** — Modelos supervisados y no supervisados para predicción y clasificación.
-8. **Redes neuronales** — Arquitecturas LSTM y MLP para pronóstico de rendimientos.
-9. **Estimación del riesgo** — VaR, CVaR, volatilidad y métricas de riesgo.
-10. **Optimización del portafolio** — Markowitz, Black-Litterman y métodos alternativos.
-11. **Backtesting** — Evaluación fuera de muestra con estrategias definidas.
-12. **Análisis de robustez** — Pruebas de sensibilidad y validación cruzada temporal.
-13. **Informe final** — Documentación completa de resultados y decisiones.
+El proyecto se desarrolla en las siguientes fases (numeración usada en el
+código y en `informes/diario_decisiones.md`):
+
+0. **Definición del problema** — Pregunta de investigación: ¿mejoran los modelos econométricos y las redes neuronales la relación rentabilidad-riesgo frente a métodos tradicionales?
+1. **Selección de empresas** — 6 a 10 empresas de distintos sectores, verificando cotización en la BVC, observaciones, confiabilidad y liquidez.
+2. **Construcción de la base de datos** — Precios, rendimientos logarítmicos y variables externas (índice de mercado, TRM, tasa de interés, inflación, petróleo); regla de sincronización de fechas.
+3. **Limpieza de datos** — Faltantes, duplicados, precios anormales y extremos, documentando todo cambio (sin eliminar extremos automáticamente).
+4. **Análisis exploratorio** — Tendencia, rendimiento, volatilidad, distribución y correlación.
+5. **Separación entrenamiento / validación / prueba** — Cronológica, sin data leakage; la prueba queda intocable hasta la evaluación final.
+6. **Modelo de referencia** — Markowitz tradicional como benchmark.
+7. **Econometría** — ARIMA y GARCH, con diagnósticos (estacionariedad, autocorrelación, heterocedasticidad, residuos, calidad de pronóstico).
+8. **Machine Learning** — Random Forest / XGBoost.
+9. **Red neuronal** — MLP y, si los datos lo permiten, LSTM.
+10. **Comparación de modelos** — MAE, RMSE y otras métricas; predicción ≠ inversión.
+11. **Estimación del riesgo** — Volatilidad, VaR y CVaR.
+12. **Optimización del portafolio** — Mínimo riesgo, máximo Sharpe y máxima rentabilidad con restricciones de riesgo.
+13. **Restricciones realistas** — Suma 1, sin cortos, peso máximo por activo y límites sectoriales.
+14. **Backtesting** — Walk-forward con rebalanceo periódico.
+15. **Comparación final** — Portafolio tradicional vs. econométrico vs. ML vs. LSTM (rentabilidad, volatilidad, Sharpe, drawdown, VaR, CVaR).
+16. **Análisis de robustez** — Cambios de período, número de empresas, restricciones, rebalanceo y ventana de entrenamiento.
+17. **Interpretación económica** — Por qué los modelos asignan los pesos que asignan, en el contexto colombiano.
+18. **Agente de IA** — Coordina y supervisa el pipeline; no modifica datos ni metodología sin registro y revisión humana.
+19. **Evaluación del agente** — Elección de modelos, detección de errores, respeto del orden temporal, documentación y reproducibilidad.
+20. **Informe final**.
 
 ## Tecnologías
 
@@ -51,12 +62,14 @@ El proyecto se desarrolla en las siguientes fases:
 ├── datos/
 │   ├── crudos/        # Datos originales de Yahoo Finance (sin modificar)
 │   ├── procesados/    # Precios y rendimientos (simple y logarítmico)
+│   ├── particiones/   # Entrenamiento / validación / prueba congelados + huellas SHA-256
 │   └── metadata/      # Metadatos de la descarga (JSON)
 ├── notebooks/         # Notebooks Jupyter por fase
 ├── src/
 │   ├── data/          # Descarga, validación, gestión de datos, metadatos
-│   ├── preprocessing/ # Cálculo de rendimientos
-│   └── exploratory_analysis/  # Estadística descriptiva, correlaciones, gráficos, outliers
+│   ├── preprocessing/ # Rendimientos, imputación Kalman, partición temporal
+│   ├── exploratory_analysis/  # Estadística descriptiva, correlaciones, gráficos, outliers
+│   └── portfolio/     # Markowitz y métricas de portafolio (Fase 6)
 ├── modelos/           # Modelos entrenados (fases posteriores)
 ├── resultados/        # Métricas, reportes y gráficos
 │   └── graficos/      # Gráficos del análisis exploratorio
@@ -72,15 +85,14 @@ Estudiantes de Estadística — Semestre VIII.
 
 ## Avance actual
 
-Fases completadas:
+Fases implementadas (las decisiones marcadas como pendientes requieren aprobación del equipo):
 
-1. **Fase 1 — Cimientos:** estructura del proyecto y documentación inicial.
-2. **Fase 2 — Adquisición y validación:** descarga de datos desde Yahoo Finance, guardado de datos crudos, metadatos y reporte de calidad.
-3. **Fase 3 — Preparación y análisis exploratorio:** cálculo de rendimientos (simple y logarítmico), estadística descriptiva, volatilidad, correlaciones, gráficos y detección de outliers.
-4. **Fase 3.5 — Auditoría e imputación:** auditoría de tickers y de calidad, formalización de buenas prácticas (`AGENTS.md`), e **imputación del valor faltante con Filtro de Kalman** (con bandera de imputación y validación MAE/RMSE).
-5. **Fase 4 — EDA con partición temporal (en curso):** partición cronológica por fechas (DEC-017), auditoría de iliquidez, detección de saltos reversibles, pruebas formales (Jarque-Bera, ADF/KPSS, Ljung-Box, ARCH-LM) sobre entrenamiento. Hallazgo abierto: DEC-018.
-6. **Fase 5 — Separación entrenamiento / validación / prueba (en curso):** partición cronológica guardada en `datos/particiones/` (entrenamiento hasta 2023, validación 2024, prueba desde 2025), verificación anti-leakage, huellas SHA-256 y acceso controlado al bloque de prueba (DEC-019).
-7. **Fase 6 — Modelo de referencia, Markowitz (completada):** benchmark con portafolios de igual ponderación (1/N), mínima varianza y máximo Sharpe, estimados solo con entrenamiento y evaluados en entrenamiento y validación, con restricciones de suma 1, sin posiciones cortas y peso máximo de 30 % por activo (DEC-020). Código en `src/portfolio/`; se ejecuta con `python -m src.portfolio.fase6`. No se usó el bloque de prueba. Pendiente: definir cuál portafolio es el benchmark oficial y la tasa libre de riesgo (hoy 0, provisional).
+1. **Fases 0 y 1 — Problema y selección de empresas:** estructura del proyecto, documentación inicial y universo de 9 empresas (DEC-006), con tickers auditados (DEC-010).
+2. **Fase 2 — Base de datos:** descarga desde Yahoo Finance, datos crudos inmutables, metadatos y reporte de calidad. La muestra está fija: del 2020-01-01 al 2026-09-14 (DEC-021). **Pendiente:** variables externas (índice de mercado, TRM, tasa de interés, inflación, petróleo).
+3. **Fase 3 — Limpieza:** auditoría de calidad y liquidez, e **imputación del único valor faltante con Filtro de Kalman** (con bandera y validación MAE/RMSE).
+4. **Fase 4 — Análisis exploratorio:** rendimientos, estadística descriptiva, volatilidad, correlaciones, outliers, auditoría de iliquidez, saltos reversibles y pruebas formales (Jarque-Bera, ADF/KPSS, Ljung-Box, ARCH-LM) sobre entrenamiento. **Hallazgo abierto:** DEC-018 (saltos reversibles del 2024-05-03), que debe resolverse antes de la Fase 7.
+5. **Fase 5 — Entrenamiento / validación / prueba:** partición cronológica en `datos/particiones/` (entrenamiento hasta 2023, validación 2024, prueba desde 2025), verificación anti-leakage, huellas SHA-256 y acceso controlado a la prueba (DEC-017, DEC-019, pendientes de aprobación).
+6. **Fase 6 — Modelo de referencia, Markowitz:** benchmark con portafolios de igual ponderación (1/N), mínima varianza y máximo Sharpe, estimados solo con entrenamiento y evaluados en entrenamiento y validación, con restricciones de suma 1, sin posiciones cortas y peso máximo de 30 % por activo (DEC-020). Código en `src/portfolio/`; se ejecuta con `python -m src.portfolio.fase6`. No se usó el bloque de prueba. Pendiente: definir cuál portafolio es el benchmark oficial y la tasa libre de riesgo (hoy 0, provisional).
 
 Empresas incluidas (tickers de Yahoo Finance):
 
@@ -104,8 +116,10 @@ python -m venv venv
 venv\Scripts\activate          # Windows
 pip install -r requirements.txt
 
-# 2. Ejecutar el pipeline completo (descarga, validación, procesamiento, EDA)
+# 2. Reprocesar desde los datos crudos guardados (no descarga; DEC-021)
 python -m src.pipeline
+#    Descarga nueva: solo con datos/crudos/ vacío y registrando la decisión
+#    python -m src.pipeline --descargar
 
 # 3. Ejecutar las pruebas
 python -m pytest tests -v
