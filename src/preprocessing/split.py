@@ -157,16 +157,18 @@ def comparar_con_huellas_guardadas(huellas, ruta):
     """Compara huellas recién calculadas con las ya registradas (DEC-021).
 
     Si ``ruta`` no existe no hay nada que comparar (primera partición) y
-    devuelve False. Si existe y alguna huella difiere o falta, lanza
-    ValueError: la partición congelada no puede cambiar en silencio.
-    Devuelve True si todas coinciden.
+    devuelve False. Si existe y alguna huella registrada difiere o
+    desaparece, lanza ValueError: la partición congelada no puede cambiar en
+    silencio. Se permite AGREGAR series nuevas (claves que no estaban), que
+    no alteran las existentes (DEC-024). Devuelve True si todas las
+    registradas coinciden.
     """
     ruta = Path(ruta)
     if not ruta.exists():
         return False
     guardadas = json.loads(ruta.read_text(encoding="utf-8"))
-    distintas = sorted(clave for clave in set(guardadas) | set(huellas)
-                       if guardadas.get(clave) != huellas.get(clave))
+    distintas = sorted(clave for clave in guardadas
+                       if guardadas[clave] != huellas.get(clave))
     if distintas:
         raise ValueError(
             "La partición congelada cambió respecto a las huellas registradas "

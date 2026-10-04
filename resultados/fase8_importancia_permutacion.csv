@@ -1,0 +1,53 @@
+modelo,variable,aumento_mse_medio,desviacion
+gradient_boosting,r_lag0,4.835691323213168e-06,1.0090089846835642e-06
+gradient_boosting,log_volumen_rel,2.6301825314590055e-06,3.996240598484408e-07
+gradient_boosting,pct_cero_21,9.308495419563744e-07,6.385102537384346e-07
+gradient_boosting,mercado_r0,4.171181367299188e-07,4.2976156874780873e-07
+gradient_boosting,r_lag1,4.0757045245507633e-07,3.899451427001888e-07
+gradient_boosting,media_5,3.914377911188498e-07,1.2187290274033635e-07
+gradient_boosting,Brent_r5,3.774047009386409e-07,8.68123690720362e-08
+gradient_boosting,empresa_ETB,4.326154785370311e-08,5.892112249415541e-08
+gradient_boosting,r_lag4,1.0766152987976181e-08,1.9920939367605527e-08
+gradient_boosting,empresa_Celsia,0.0,0.0
+gradient_boosting,empresa_Banco de Bogota,0.0,0.0
+gradient_boosting,empresa_Ecopetrol,0.0,0.0
+gradient_boosting,empresa_Nutresa,0.0,0.0
+gradient_boosting,empresa_Banco Davivienda PF,0.0,0.0
+gradient_boosting,empresa_Promigas,0.0,0.0
+gradient_boosting,empresa_Mineros SA,0.0,0.0
+gradient_boosting,empresa_Grupo Bolivar,0.0,0.0
+gradient_boosting,vol_21,-3.411282265172429e-08,1.884304796004604e-08
+gradient_boosting,TRM_r5,-5.4345842465856976e-08,3.0702779572787885e-08
+gradient_boosting,TRM_r1,-7.292857214084326e-08,5.8229855309281735e-08
+gradient_boosting,r_lag3,-2.2384831571401657e-07,1.428331967936302e-07
+gradient_boosting,Brent_r1,-2.457775598049957e-07,2.580163693191043e-07
+gradient_boosting,mercado_media_5,-2.918225904708976e-07,1.40363588079686e-07
+gradient_boosting,vol_5,-3.4112646625138406e-07,1.6705868282502486e-07
+gradient_boosting,r_lag2,-3.941982118723839e-07,4.620164710324479e-07
+gradient_boosting,media_21,-1.5998560068796386e-06,9.543328832124802e-07
+random_forest,r_lag0,4.326404638017606e-06,9.185629284476301e-07
+random_forest,log_volumen_rel,7.464099333824581e-07,8.327270958618973e-08
+random_forest,mercado_media_5,3.4966122607553006e-07,1.6648861049864487e-07
+random_forest,empresa_ETB,9.418173168631314e-08,1.6158509675515213e-08
+random_forest,mercado_r0,9.399509960468163e-08,2.3758657788807542e-07
+random_forest,r_lag3,8.23680171724555e-08,1.1622753111712693e-07
+random_forest,TRM_r5,1.5261906315697323e-08,2.9655789530403505e-08
+random_forest,media_5,5.54251529955984e-09,4.127483225060699e-07
+random_forest,empresa_Banco de Bogota,4.481321449665253e-09,3.187196858394487e-09
+random_forest,empresa_Ecopetrol,2.55903282052241e-09,6.8739928094612706e-09
+random_forest,empresa_Grupo Bolivar,1.0289985329743276e-10,9.461275909850813e-10
+random_forest,empresa_Celsia,0.0,0.0
+random_forest,empresa_Banco Davivienda PF,0.0,0.0
+random_forest,empresa_Mineros SA,0.0,0.0
+random_forest,empresa_Promigas,-4.016137726515438e-09,3.0516282794604958e-09
+random_forest,Brent_r5,-1.460085661645098e-08,6.831294933171745e-08
+random_forest,empresa_Nutresa,-2.1915214977973312e-08,9.660367755898785e-09
+random_forest,r_lag4,-3.048447426963821e-08,2.1341334678090942e-08
+random_forest,Brent_r1,-7.69931054241807e-08,6.032047366840167e-08
+random_forest,TRM_r1,-8.225002473546483e-08,8.440431002424009e-08
+random_forest,pct_cero_21,-1.2880909106076062e-07,9.17152742089046e-08
+random_forest,r_lag2,-3.269428142186823e-07,1.8097446886784602e-07
+random_forest,vol_21,-3.3359063275079786e-07,1.0573294678713296e-07
+random_forest,media_21,-3.5372816507013136e-07,1.4641547391141208e-07
+random_forest,r_lag1,-4.55743804864692e-07,2.594422872136376e-07
+random_forest,vol_5,-7.198215758061842e-07,1.8598557165726963e-07

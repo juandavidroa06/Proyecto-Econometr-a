@@ -1,8 +1,14 @@
 {
+  "externos_test": "bf534b555d4657ba3b4dd86f579cfb69f3d913af4a4dc6643b89fd5363ff6542",
+  "externos_train": "ad6f8e9b8e18fc81f4e358f077c8db542b5fba2a87bf756269ab14991f96f7b5",
+  "externos_validacion": "f1647852d4f90d2a8a10f259b2680ea257c83257b67919e8233f9900780da99c",
   "precios_test": "1ede1c92597d81d78339748e73989a2ec01f5bc6480399b003119d8805c2c07c",
   "precios_train": "b8d05cb246472a51a17edc56de025eb15552f2848dc298c0959333903f4e7584",
   "precios_validacion": "dfc69d717466bed5c31c1af3a802fc93892489e880de7f9d494518d3efebec15",
   "rendimientos_log_test": "43b97ede5f51c52e8e4f626f2e5140b1274b3d6f15e6cf0119a84360b75c45da",
   "rendimientos_log_train": "87974447b4f7895c29e7cf14a9c976677f715dc2db8dfcacbb2a3ea6fa1b9f9f",
-  "rendimientos_log_validacion": "094eae73631b4fed93b24ac5139029288270a0aed64f7f3fb6dfbdf5b57bb7eb"
+  "rendimientos_log_validacion": "094eae73631b4fed93b24ac5139029288270a0aed64f7f3fb6dfbdf5b57bb7eb",
+  "volumen_test": "95a1efe440d10ffbbd657823f7658d7aa4c65f53096d2cbc7243ad17e5c38d13",
+  "volumen_train": "194c4354dc2638490bf4f63bb2a7dbee1e428b40fdd066269e59d3f9198a189d",
+  "volumen_validacion": "cc3eb3ce5fc3b69cf5bfb3d11e8cc2065cfa89dfbaba03f8303120b6f02015f4"
 }

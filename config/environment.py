@@ -29,8 +29,10 @@ RAIZ = Path(__file__).resolve().parent.parent
 # =============================================================================
 
 RUTA_DATOS_CRUDOS = RAIZ / "datos" / "crudos"
+RUTA_CRUDOS_EXTERNOS = RAIZ / "datos" / "crudos" / "externos"
 RUTA_DATOS_PROCESADOS = RAIZ / "datos" / "procesados"
 RUTA_DATOS_METADATA = RAIZ / "datos" / "metadata"
+RUTA_METADATA_EXTERNOS = RAIZ / "datos" / "metadata" / "externos"
 RUTA_PARTICIONES = RAIZ / "datos" / "particiones"
 RUTA_NOTEBOOKS = RAIZ / "notebooks"
 RUTA_SRC = RAIZ / "src"

@@ -364,4 +364,40 @@ Cada decisión se registra con el siguiente formato:
 
 ---
 
+### DEC-024: Variables externas (TRM y Brent) y ampliación de la partición congelada
+
+- **Fecha:** 2026-10-04
+- **Fase:** Fase 2 (base de datos) y Fase 5 (partición), como preparación de la Fase 8
+- **Decisión:**
+  - Se descargan **una vez** de Yahoo Finance la TRM (`COP=X`) y el petróleo Brent (`BZ=F`), con el mismo horizonte de las acciones (2020-01-01 a 2026-09-14, `FECHA_FIN` fija). Se guardan como crudos inmutables en `datos/crudos/externos/` (misma protección que DEC-021) con metadatos en `datos/metadata/externos/`. Código: `src/data/externos.py`; `python -m src.pipeline --descargar` también las descarga. El índice COLCAP no está disponible en Yahoo; tasa de interés e inflación quedan pendientes (requieren otras fuentes).
+  - El **volumen** de las acciones (con el 2024-05-03 en NaN por DEC-022) y las **externas** (en su propio calendario) se agregan a la partición de la Fase 5 (`volumen_*` y `externos_*` en `datos/particiones/`, con huellas). Así la Fase 8 no necesita leer crudos completos, que incluyen el periodo de prueba.
+  - `comparar_con_huellas_guardadas` ahora permite **agregar** series nuevas; las huellas ya registradas deben seguir coincidiendo exactamente y no pueden desaparecer.
+- **Evidencia:** Las 6 huellas existentes no cambiaron al regenerar; se agregaron 6 nuevas. Una segunda ejecución del pipeline reproduce todas. Faltantes en los crudos externos (todo el periodo): 1 día en TRM y 59 en Brent (calendarios distintos); no se rellenan.
+- **Alternativas consideradas:** leer los crudos externos en la Fase 8 y recortarlos por fecha (rechazada: cargaría en memoria el periodo de prueba); sincronizar las externas con el calendario de la BVC al guardarlas (rechazada: la regla de sincronización es una decisión de modelado y va en la Fase 8).
+- **Estado:** Aplicada (pendiente de revisión del equipo).
+
+---
+
+### DEC-025: Fase 8 — Random Forest y Gradient Boosting para el rendimiento del día siguiente
+
+- **Fecha:** 2026-10-04
+- **Fase:** Fase 8 — Machine Learning
+- **Decisión (diseño):**
+  - **Objetivo:** rendimiento logarítmico de t+1 con información disponible al cierre de t (regresión), comparable con ARIMA y las referencias de la Fase 7.
+  - **Variables** (`src/machine_learning/variables.py`): rendimientos de t a t−4; media y volatilidad móviles de 5 y 21 días; proporción de rendimientos cero en 21 días (iliquidez); volumen relativo (log del volumen menos su mediana de 21 días); rendimiento promedio del mercado (las 9) en t y su media de 5 días; rendimientos de 1 y 5 días de TRM y Brent con fecha **estrictamente anterior** a t (su cierre en Yahoo es posterior al de la BVC; tolerancia de 7 días); indicador de empresa.
+  - **Modelo agrupado** de las 9 empresas (≈ 9 000 filas de entrenamiento) en vez de uno por empresa (≈ 1 000).
+  - **Anti-leakage:** cada fila se asigna a entrenamiento o validación por la **fecha del objetivo**; filas con faltantes se descartan y se cuentan (train: 208 de 9 378; validación: 176 de 2 295, incluye el 2024-05-03 y sus rezagos).
+  - **Hiperparámetros:** validación cruzada temporal expansiva de 5 pliegues **dentro de entrenamiento**, por fechas (un mismo día nunca queda en dos pliegues); rejilla de 8 combinaciones por modelo; semilla 42. La validación solo se usa para comparar. Elegidos: Random Forest `max_depth=6, min_samples_leaf=50, max_features=0.3` (300 árboles); Gradient Boosting (`HistGradientBoostingRegressor`, el mismo método que XGBoost dentro de scikit-learn) `learning_rate=0.02, max_depth=2, min_samples_leaf=50` (300 iteraciones).
+  - **Comparación** en validación sobre las mismas filas: pronóstico cero, media de entrenamiento y ARIMA de la Fase 7; RMSE, MAE y Diebold-Mariano frente a la media. Dependencia nueva: `scikit-learn==1.9.1`.
+- **Resultados (validación 2024; hallazgos, no conclusiones definitivas):**
+  - En la validación cruzada (train) el mejor Random Forest reduce el MSE solo 0,7 % frente a la media; **ningún Gradient Boosting supera a la media** en la validación cruzada.
+  - En validación, agrupando las 9 empresas: RMSE Random Forest 0,02018, Gradient Boosting 0,02018, media de train 0,02024, cero 0,02023, ARIMA 0,02028. La mejora de los modelos de ML (≈ 0,3 % del RMSE) **no es significativa** (Diebold-Mariano p = 0,41 y 0,57). Por empresa, ningún p-valor es < 0,05; el más bajo es Promigas (p ≈ 0,07), donde además el ARIMA MA(1) tiene el menor RMSE.
+  - **Importancia por permutación** (validación): domina el rendimiento del día (`r_lag0`, coherente con reversión de corto plazo y rebote por iliquidez) y el volumen relativo. TRM y Brent aportan prácticamente nada.
+- **Implicación:** Con estas variables, ni ARIMA (DEC-023) ni Random Forest / Gradient Boosting predicen el rendimiento diario mejor que una media constante de forma estadísticamente distinguible. Para la Fase 9 (redes neuronales) la referencia exigente es la media; para la optimización (Fase 12) no hay, por ahora, evidencia para sustituir la media histórica por pronósticos de modelos.
+- **Alternativas consideradas:** modelos por empresa (rechazada: pocas observaciones); ajustar hiperparámetros con validación (rechazada: sesgaría la comparación con ARIMA); clasificación de la dirección (aplazada); XGBoost como librería aparte (descartada: `HistGradientBoosting` cubre el mismo método sin otra dependencia).
+- **Evidencia utilizada:** `resultados/fase8_*.csv` (filas, validación cruzada, hiperparámetros, métricas, pronósticos, importancia) y `resultados/graficos/fase8_importancia.png`; código en `src/machine_learning/`; 8 tests en `tests/test_machine_learning_fase8.py` (variables sin información futura, externas con fecha anterior, separación por fecha objetivo, pliegues sin solape, reproducibilidad).
+- **Estado:** Pendiente de aprobación del equipo.
+
+---
+
 *Las decisiones siguientes se registrarán conforme avance el proyecto.*

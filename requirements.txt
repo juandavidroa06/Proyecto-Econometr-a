@@ -37,3 +37,8 @@ pytest==9.1.1
 # 8.0.0 es compatible con Python 3.14 y con las versiones fijadas arriba
 # (no cambió ninguna otra dependencia al instalarla).
 arch==8.0.0
+
+# --- Machine Learning (Fase 8: Random Forest y Gradient Boosting, DEC-025) ---
+# Instala además joblib, threadpoolctl y cloudpickle; no cambió ninguna
+# versión de las dependencias anteriores.
+scikit-learn==1.9.1

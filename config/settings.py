@@ -53,6 +53,14 @@ TICKERS = {
     "Grupo Bolivar": "GRUBOLIVAR.CL",
 }
 
+# DEC-024: variables externas (Yahoo Finance), descargadas una vez con la
+# misma FECHA_INICIO / FECHA_FIN y guardadas como crudos inmutables en
+# datos/crudos/externos/. El índice COLCAP no está disponible en Yahoo.
+TICKERS_EXTERNOS = {
+    "TRM": "COP=X",       # pesos por dólar
+    "Brent": "BZ=F",      # futuro de petróleo Brent (USD por barril)
+}
+
 # Frecuencia / intervalo de las series de tiempo (Yahoo Finance).
 # "1d" = diario, "1wk" = semanal, "1mo" = mensual.
 FRECUENCIA = "1d"

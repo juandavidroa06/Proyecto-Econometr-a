@@ -95,8 +95,14 @@ def test_huellas_iguales(tmp_path):
     assert comparar_con_huellas_guardadas({"x": "1", "y": "2"}, ruta) is True
 
 
+def test_huellas_permiten_agregar_series(tmp_path):
+    ruta = tmp_path / "h.json"
+    guardar_huellas({"x": "1", "y": "2"}, ruta)
+    assert comparar_con_huellas_guardadas({"x": "1", "y": "2", "z": "3"}, ruta)
+
+
 @pytest.mark.parametrize("nuevas", [{"x": "1", "y": "CAMBIO"}, {"x": "1"},
-                                    {"x": "1", "y": "2", "z": "3"}])
+                                    {"x": "1", "y": "CAMBIO", "z": "3"}])
 def test_huellas_distintas_lanzan_error(tmp_path, nuevas):
     ruta = tmp_path / "h.json"
     guardar_huellas({"x": "1", "y": "2"}, ruta)

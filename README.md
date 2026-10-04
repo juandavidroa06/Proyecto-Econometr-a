@@ -1,6 +1,6 @@
 # Portafolio Colombiano — Proyecto de Econometría
 
-> **Estado del proyecto:** En desarrollo — Fases 0 a 7 implementadas; siguiente: Fase 8 (Machine Learning)
+> **Estado del proyecto:** En desarrollo — Fases 0 a 8 implementadas; siguiente: Fase 9 (Red neuronal)
 > **Última actualización:** Octubre 2026
 
 ---
@@ -51,7 +51,7 @@ código y en `informes/diario_decisiones.md`):
 | Estadística | scipy, statsmodels |
 | Visualización | matplotlib, seaborn |
 | Econometría | statsmodels, arch 8.0.0 |
-| Machine Learning | scikit-learn (por definir) |
+| Machine Learning | scikit-learn 1.9.1 |
 | Redes neuronales | TensorFlow / PyTorch (por definir) |
 | Control de versiones | Git |
 | Notebooks | Jupyter |
@@ -60,7 +60,7 @@ código y en `informes/diario_decisiones.md`):
 
 ```
 ├── datos/
-│   ├── crudos/        # Datos originales de Yahoo Finance (sin modificar)
+│   ├── crudos/        # Datos originales de Yahoo Finance (sin modificar); externos/ = TRM y Brent
 │   ├── procesados/    # Precios y rendimientos (simple y logarítmico)
 │   ├── particiones/   # Entrenamiento / validación / prueba congelados + huellas SHA-256
 │   └── metadata/      # Metadatos de la descarga (JSON)
@@ -70,7 +70,8 @@ código y en `informes/diario_decisiones.md`):
 │   ├── preprocessing/ # Rendimientos, imputación Kalman, partición temporal
 │   ├── exploratory_analysis/  # Estadística descriptiva, correlaciones, gráficos, outliers
 │   ├── portfolio/     # Markowitz y métricas de portafolio (Fase 6)
-│   └── econometrics/  # ARIMA, GARCH y métricas de pronóstico (Fase 7)
+│   ├── econometrics/  # ARIMA, GARCH y métricas de pronóstico (Fase 7)
+│   └── machine_learning/  # Variables, Random Forest y Gradient Boosting (Fase 8)
 ├── modelos/           # Modelos entrenados (fases posteriores)
 ├── resultados/        # Métricas, reportes y gráficos
 │   └── graficos/      # Gráficos del análisis exploratorio
@@ -89,12 +90,13 @@ Estudiantes de Estadística — Semestre VIII.
 Fases implementadas (las decisiones marcadas como pendientes requieren aprobación del equipo):
 
 1. **Fases 0 y 1 — Problema y selección de empresas:** estructura del proyecto, documentación inicial y universo de 9 empresas (DEC-006), con tickers auditados (DEC-010).
-2. **Fase 2 — Base de datos:** descarga desde Yahoo Finance, datos crudos inmutables, metadatos y reporte de calidad. La muestra está fija: del 2020-01-01 al 2026-09-14 (DEC-021). **Pendiente:** variables externas (índice de mercado, TRM, tasa de interés, inflación, petróleo).
+2. **Fase 2 — Base de datos:** descarga desde Yahoo Finance, datos crudos inmutables, metadatos y reporte de calidad. La muestra está fija: del 2020-01-01 al 2026-09-14 (DEC-021). Variables externas: TRM y petróleo Brent (DEC-024). **Pendiente:** índice de mercado (COLCAP, no disponible en Yahoo), tasa de interés e inflación.
 3. **Fase 3 — Limpieza:** auditoría de calidad y liquidez, **imputación del único valor faltante con Filtro de Kalman** (con bandera y validación MAE/RMSE) y precio inválido de la fuente del 2024-05-03 marcado con bandera, sin imputar (DEC-022).
 4. **Fase 4 — Análisis exploratorio:** rendimientos, estadística descriptiva, volatilidad, correlaciones, outliers, auditoría de iliquidez, saltos reversibles y pruebas formales (Jarque-Bera, ADF/KPSS, Ljung-Box, ARCH-LM) sobre entrenamiento. El hallazgo DEC-018 se resolvió en DEC-022: el precio de Yahoo del 2024-05-03 es un error de la fuente en las 9 empresas (contrastado con el ADR de Ecopetrol) y queda marcado como inválido en la capa procesada.
 5. **Fase 5 — Entrenamiento / validación / prueba:** partición cronológica en `datos/particiones/` (entrenamiento hasta 2023, validación 2024, prueba desde 2025), verificación anti-leakage, huellas SHA-256 y acceso controlado a la prueba (DEC-017, DEC-019, pendientes de aprobación).
 6. **Fase 6 — Modelo de referencia, Markowitz:** benchmark con portafolios de igual ponderación (1/N), mínima varianza y máximo Sharpe, estimados solo con entrenamiento y evaluados en entrenamiento y validación, con restricciones de suma 1, sin posiciones cortas y peso máximo de 30 % por activo (DEC-020). Código en `src/portfolio/`; se ejecuta con `python -m src.portfolio.fase6`. No se usó el bloque de prueba. Pendiente: definir cuál portafolio es el benchmark oficial y la tasa libre de riesgo (hoy 0, provisional).
 7. **Fase 7 — Econometría:** ARIMA(p,0,q) elegido por BIC y GARCH(1,1) con errores t, estimados solo con entrenamiento y evaluados con pronósticos a un paso en validación frente a referencias simples (media, cero, varianza constante y EWMA), con pruebas de Diebold-Mariano (DEC-023). Código en `src/econometrics/`; se ejecuta con `python -m src.econometrics.fase7`. Hallazgos: ningún ARIMA supera a la media de entrenamiento; GARCH supera a la varianza constante en Banco de Bogotá y Ecopetrol, pero no a EWMA en ninguna acción líquida; en acciones ilíquidas (ETB sobre todo) el GARCH no es fiable.
+8. **Fase 8 — Machine Learning:** Random Forest y Gradient Boosting (scikit-learn) agrupados para las 9 empresas, que predicen el rendimiento del día siguiente con rezagos, volatilidad, volumen, mercado, TRM y Brent. Los hiperparámetros se eligen con validación cruzada temporal dentro de entrenamiento y los modelos se comparan en validación contra la media, el cero y ARIMA (DEC-025). Código en `src/machine_learning/`; se ejecuta con `python -m src.machine_learning.fase8`. Hallazgo: la mejora frente a la media (≈ 0,3 % del RMSE) no es significativa.
 
 Empresas incluidas (tickers de Yahoo Finance):
 

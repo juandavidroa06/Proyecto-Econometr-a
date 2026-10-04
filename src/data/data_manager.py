@@ -105,7 +105,8 @@ def cargar_resultados_crudos(tickers, ruta=RUTA_DATOS_CRUDOS):
     if faltantes:
         raise FileNotFoundError(
             f"Faltan datos crudos en {ruta} para: {faltantes}. "
-            "Ejecute la descarga con 'python -m src.pipeline --descargar'.")
+            "Para las acciones: 'python -m src.pipeline --descargar'; para las "
+            "externas: 'python -m src.data.externos' (solo con la carpeta vacía).")
 
     resultados = {}
     for nombre, ticker in tickers.items():
@@ -279,6 +280,7 @@ def guardar_dataset_analisis(dataset, ruta=RUTA_DATOS_PROCESADOS):
 ARCHIVO_BANDERA_IMPUTACION = "banderas_imputacion.csv"
 ARCHIVO_RETORNO_DEPENDE = "retorno_depende_imputacion.csv"
 ARCHIVO_BANDERA_INVALIDO = "banderas_dato_invalido.csv"
+ARCHIVO_VOLUMEN = "volumen.csv"
 
 
 def procesar_con_imputacion(datos_dict, columna=PRECIO_RENDIMIENTOS,
@@ -344,6 +346,11 @@ def procesar_con_imputacion(datos_dict, columna=PRECIO_RENDIMIENTOS,
         raise ValueError("Una fecha inválida coincide con un valor imputado; "
                          "revisar DEC-013 y DEC-022 antes de continuar.")
     precios = precios.mask(bandera_invalido)
+    # Volumen en el calendario de los precios; el del día inválido también
+    # queda NaN (la fila completa de la fuente es dudosa, DEC-022).
+    volumen = (_dataframe_precios_anchos(datos_dict, "Volume")
+               .reindex(index=precios.index, columns=precios.columns)
+               .mask(bandera_invalido))
     rend_simples, rend_log, abarca_invalido = rendimientos_saltando_invalidos(
         precios, bandera_invalido)
 
@@ -364,6 +371,7 @@ def procesar_con_imputacion(datos_dict, columna=PRECIO_RENDIMIENTOS,
         "retorno_depende": retorno_depende,
         "bandera_invalido": bandera_invalido,
         "retorno_abarca_invalido": abarca_invalido,
+        "volumen": volumen,
         "dataset": dataset,
         "reporte_imputaciones": reporte,
     }
@@ -442,6 +450,10 @@ def guardar_conjunto_procesado(conjunto, ruta=RUTA_DATOS_PROCESADOS):
         conjunto["bandera_invalido"].to_csv(ruta / ARCHIVO_BANDERA_INVALIDO,
                                             index=True, encoding="utf-8")
         guardados.append(str(ruta / ARCHIVO_BANDERA_INVALIDO))
+
+    if conjunto.get("volumen") is not None and not conjunto["volumen"].empty:
+        conjunto["volumen"].to_csv(ruta / ARCHIVO_VOLUMEN, index=True, encoding="utf-8")
+        guardados.append(str(ruta / ARCHIVO_VOLUMEN))
 
     if conjunto["dataset"] is not None and not conjunto["dataset"].empty:
         conjunto["dataset"].to_csv(ruta / ARCHIVO_DATASET, index=False, encoding="utf-8")

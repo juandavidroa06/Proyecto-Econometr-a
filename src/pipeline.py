@@ -103,6 +103,10 @@ def etapa_descarga():
     )
     guardar_metadatos(metadatos, RUTA_DATOS_METADATA)
 
+    # DEC-024: variables externas (TRM, Brent) con el mismo horizonte.
+    from src.data.externos import descargar_externos
+    descargar_externos()
+
     return resultados
 
 
@@ -339,8 +343,14 @@ def etapa_fase5(conjunto):
         huella,
     )
 
+    from src.data.externos import cargar_externos
+
+    # DEC-024: volumen y variables externas también se parten y se protegen
+    # con huellas, para que la Fase 8 no lea el periodo de prueba.
     series = {"rendimientos_log": conjunto["rend_log"],
-              "precios": conjunto["precios"]}
+              "precios": conjunto["precios"],
+              "volumen": conjunto["volumen"],
+              "externos": cargar_externos()}
     huellas = {}
     particiones = {}
     for nombre_base, df in series.items():
