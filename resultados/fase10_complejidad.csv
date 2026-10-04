@@ -1,0 +1,8 @@
+modelo,especificacion,parametros_por_red_o_total,seleccion_hiperparametros,complejidad
+cero,Ninguno,0.0,—,Muy baja
+media_train,Media de entrenamiento por empresa,9.0,—,Muy baja
+arima,"ARIMA(p,0,q) por empresa, máxima verosimilitud",26.0,Orden por BIC en entrenamiento,Baja
+random_forest,"300 árboles, profundidad ≤ 6, hoja ≥ 50",,Validación cruzada temporal en entrenamiento,Media
+gradient_boosting,"300 iteraciones, profundidad ≤ 2, tasa 0.02",,Validación cruzada temporal en entrenamiento,Media
+mlp,"Capas ocultas (64, 32), 5 semillas",3841.0,Final de entrenamiento (parada temprana),Alta
+lstm,"LSTM 32 unidades, 30 días, 5 semillas",5034.0,Final de entrenamiento (parada temprana),Alta

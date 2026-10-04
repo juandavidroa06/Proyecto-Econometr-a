@@ -1,6 +1,6 @@
 # Portafolio Colombiano — Proyecto de Econometría
 
-> **Estado del proyecto:** En desarrollo — Fases 0 a 9 implementadas; siguiente: Fase 10 (Comparación de modelos)
+> **Estado del proyecto:** En desarrollo — Fases 0 a 10 implementadas; siguiente: Fase 11 (Estimación del riesgo)
 > **Última actualización:** Octubre 2026
 
 ---
@@ -72,7 +72,8 @@ código y en `informes/diario_decisiones.md`):
 │   ├── portfolio/     # Markowitz y métricas de portafolio (Fase 6)
 │   ├── econometrics/  # ARIMA, GARCH y métricas de pronóstico (Fase 7)
 │   ├── machine_learning/  # Variables, Random Forest y Gradient Boosting (Fase 8)
-│   └── neural_networks/   # MLP y LSTM en PyTorch (Fase 9)
+│   ├── neural_networks/   # MLP y LSTM en PyTorch (Fase 9)
+│   └── comparacion/       # MCS, Holm, R² fuera de muestra, Pesaran-Timmermann (Fase 10)
 ├── modelos/           # Modelos entrenados (fases posteriores)
 ├── resultados/        # Métricas, reportes y gráficos
 │   └── graficos/      # Gráficos del análisis exploratorio
@@ -99,6 +100,7 @@ Fases implementadas (las decisiones marcadas como pendientes requieren aprobaci�
 7. **Fase 7 — Econometría:** ARIMA(p,0,q) elegido por BIC y GARCH(1,1) con errores t, estimados solo con entrenamiento y evaluados con pronósticos a un paso en validación frente a referencias simples (media, cero, varianza constante y EWMA), con pruebas de Diebold-Mariano (DEC-023). Código en `src/econometrics/`; se ejecuta con `python -m src.econometrics.fase7`. Hallazgos: ningún ARIMA supera a la media de entrenamiento; GARCH supera a la varianza constante en Banco de Bogotá y Ecopetrol, pero no a EWMA en ninguna acción líquida; en acciones ilíquidas (ETB sobre todo) el GARCH no es fiable.
 8. **Fase 8 — Machine Learning:** Random Forest y Gradient Boosting (scikit-learn) agrupados para las 9 empresas, que predicen el rendimiento del día siguiente con rezagos, volatilidad, volumen, mercado, TRM y Brent. Los hiperparámetros se eligen con validación cruzada temporal dentro de entrenamiento y los modelos se comparan en validación contra la media, el cero y ARIMA (DEC-025). Código en `src/machine_learning/`; se ejecuta con `python -m src.machine_learning.fase8`. Hallazgo: la mejora frente a la media (≈ 0,3 % del RMSE) no es significativa.
 9. **Fase 9 — Redes neuronales:** MLP y LSTM (PyTorch; la LSTM usa los últimos 30 días) para el rendimiento del día siguiente, con hiperparámetros y parada temprana elegidos con el final de entrenamiento y un conjunto de 5 semillas (DEC-026). Código en `src/neural_networks/`; se ejecuta con `python -m src.neural_networks.fase9` (unos 5 minutos en CPU). Hallazgo: ninguna red supera a la media de entrenamiento en validación, igual que ARIMA, Random Forest y Gradient Boosting.
+10. **Fase 10 — Comparación de modelos:** consolida los pronósticos de validación de las Fases 7 a 9 con Model Confidence Set, R² fuera de muestra con intervalos bootstrap, Diebold-Mariano, Pesaran-Timmermann y corrección de Holm por comparaciones múltiples (DEC-027). Código en `src/comparacion/`; se ejecuta con `python -m src.comparacion.fase10` (requiere las Fases 7 a 9). Hallazgos: para el rendimiento diario ningún modelo se distingue de la media (los 7 quedan en el MCS); para la volatilidad, EWMA es el único en el MCS.
 
 Empresas incluidas (tickers de Yahoo Finance):
 

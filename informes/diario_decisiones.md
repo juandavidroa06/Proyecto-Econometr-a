@@ -425,4 +425,26 @@ Cada decisión se registra con el siguiente formato:
 
 ---
 
+### DEC-027: Fase 10 — Comparación de modelos con control de comparaciones múltiples
+
+- **Fecha:** 2026-10-04
+- **Fase:** Fase 10 — Comparación de modelos
+- **Decisión (diseño):**
+  - Se consolidan los pronósticos de **validación** de las Fases 7 a 9 (no se reentrena nada; se leen sus CSV). Media condicional: cero, media de entrenamiento, ARIMA, Random Forest, Gradient Boosting, MLP y LSTM sobre las mismas 1 631 filas (224 fechas). Varianza condicional: GARCH(1,1), EWMA y varianza constante.
+  - **Dependencia entre empresas:** las pérdidas se promedian por fecha antes de las pruebas agregadas (las 9 acciones de un mismo día no son observaciones independientes).
+  - **Pruebas:** Model Confidence Set de Hansen, Lunde y Nason (2011) con estadístico T_max al 10 %; R² fuera de muestra de Campbell y Thompson (2008) frente a la media, con IC 95 % por bootstrap de bloques móviles (bloques de 10 días, 2 000 réplicas, semilla 42); Diebold-Mariano frente a la media; acierto direccional con la prueba de Pesaran-Timmermann (1992). **Corrección de Holm** en cada familia de pruebas (DM agregadas, PT agregadas, 54 pruebas DM por empresa en media y 18 en varianza).
+  - **Complejidad:** número de parámetros donde está definido (media 9, ARIMA 26 en total, MLP 3 841 y LSTM 5 034 por red, ×5 semillas) y método de selección de hiperparámetros.
+- **Resultados (validación 2024; hallazgos, no conclusiones definitivas):**
+  - **Rendimiento esperado:** los **7 modelos están en el MCS** (p_MCS ≥ 0,38): ninguno se distingue estadísticamente del mejor, incluidos el cero y la media. R²_OS frente a la media: Gradient Boosting 1,26 % [IC 0,00 %; 2,54 %], Random Forest 1,02 % [0,04 %; 2,08 %], cero 0,31 %, LSTM 0,07 % [−3,8 %; 3,2 %], MLP −0,17 %, ARIMA −1,12 %. Los intervalos de Random Forest y Gradient Boosting rozan el cero por arriba, pero Diebold-Mariano no rechaza (p = 0,16 y 0,20; 0,81 tras Holm) y el MCS no los separa: **evidencia débil, no concluyente**, de una mejora del orden de 1 % en el error cuadrático.
+  - **Por empresa:** 5 de 54 pruebas con p < 0,05 sin corregir (cerca de 2,7 esperadas por azar); **ninguna significativa tras Holm**.
+  - **Dirección:** acierto entre 47,9 % y 52,7 %. ARIMA, MLP y LSTM tienen p de Pesaran-Timmermann ≈ 0,02–0,03 sin corregir, pero **≈ 0,11 tras Holm**; además la prueba supone independencia entre filas y aquí hay correlación entre empresas del mismo día, así que esos p-valores son, si acaso, optimistas.
+  - **Volatilidad (4 líquidas):** **solo EWMA queda en el MCS** al 10 % (GARCH p_MCS = 0,087; varianza constante 0,000). Por empresa, tras Holm, GARCH supera a la varianza constante en Banco de Bogotá y Ecopetrol y es peor que ella en Promigas; frente a EWMA ninguna diferencia es significativa.
+- **Conclusión de la fase:** para el **rendimiento diario**, más complejidad (de 9 a ~25 000 parámetros contando las 5 semillas) no produce una mejora estadísticamente distinguible frente a la media o al cero. Para la **volatilidad**, el modelo más simple que se adapta (EWMA, sin parámetros estimados) es el mejor. Ambos resultados coinciden con la advertencia del borrador ("predicción ≠ inversión"; "la IA tiene que demostrar que mejora algo").
+- **Implicaciones:** (1) Fase 11 (riesgo): usar EWMA como estimador principal de volatilidad para VaR/CVaR y GARCH como alternativa. (2) Fase 12 (optimización): la media histórica (o el cero) sigue siendo el estimador de rendimiento esperado justificado; Random Forest / Gradient Boosting pueden evaluarse como alternativa en el backtesting (Fase 14), donde lo que importa es el valor económico con costos, no el RMSE.
+- **Alternativas consideradas:** comparar por filas sin promediar por fecha (rechazada: trata como independientes observaciones correlacionadas); no corregir por pruebas múltiples (rechazada: con 54 pruebas, ~3 falsos positivos esperados); MCS con estadístico de rango (se eligió T_max, más usado); evaluar valor económico aquí (aplazado a la Fase 14).
+- **Evidencia utilizada:** `resultados/fase10_media.csv`, `fase10_media_por_empresa.csv`, `fase10_varianza_mcs.csv`, `fase10_varianza_por_empresa.csv`, `fase10_complejidad.csv`, `resultados/graficos/fase10_comparacion.png`; código en `src/comparacion/` (`estadistica.py`, `fase10.py`); 9 tests en `tests/test_comparacion_fase10.py` (Holm con valores conocidos, bootstrap reproducible, MCS excluye un modelo claramente peor e incluye equivalentes, R²_OS, Pesaran-Timmermann). Segunda ejecución: resultados idénticos.
+- **Estado:** Pendiente de aprobación del equipo.
+
+---
+
 *Las decisiones siguientes se registrarán conforme avance el proyecto.*
