@@ -1,10 +1,10 @@
 serie,n,adf_pvalor,kpss_pvalor,adf_rechaza_raiz_unitaria,kpss_rechaza_estacionariedad,serie_tipo
-Celsia,1041,0.4271620458313963,0.01,False,True,precio
-Banco de Bogota,1041,0.6604889546256321,0.01,False,True,precio
-Ecopetrol,1041,0.12672344209888536,0.01,False,True,precio
-ETB,1041,0.671614797285369,0.01,False,True,precio
+Celsia,1041,0.42716204583139505,0.01,False,True,precio
+Banco de Bogota,1041,0.6604889546256294,0.01,False,True,precio
+Ecopetrol,1041,0.12672344209888436,0.01,False,True,precio
+ETB,1041,0.6716147972853685,0.01,False,True,precio
 Nutresa,1043,0.836041352940825,0.01,False,True,precio
-Banco Davivienda PF,1041,0.11172852300809821,0.01,False,True,precio
-Promigas,1041,0.4292363189994812,0.01,False,True,precio
-Mineros SA,1041,0.8654255032431233,0.01,False,True,precio
+Banco Davivienda PF,1041,0.1117285230080956,0.01,False,True,precio
+Promigas,1041,0.4292363189994786,0.01,False,True,precio
+Mineros SA,1041,0.8654255032431235,0.01,False,True,precio
 Grupo Bolivar,1041,0.07437291049334914,0.07001969279538763,False,False,precio

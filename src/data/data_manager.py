@@ -45,6 +45,11 @@ def nombre_archivo_crudo(ticker):
 def guardar_datos_crudos(datos_dict, ruta=RUTA_DATOS_CRUDOS):
     """Guarda un DataFrame por empresa en formato CSV (datos crudos intactos).
 
+    Los crudos son inmutables (AGENTS.md, sección 5; DEC-021): si ya existe
+    alguno de los archivos de destino se lanza ``FileExistsError`` ANTES de
+    escribir nada. Para reemplazarlos hay que moverlos manualmente y
+    registrar la decisión en el diario.
+
     Parámetros:
         datos_dict: dict {nombre_empresa: dict_resultado} (con clave "dataframe")
         o {nombre_empresa: DataFrame}.
@@ -55,7 +60,7 @@ def guardar_datos_crudos(datos_dict, ruta=RUTA_DATOS_CRUDOS):
     ruta = Path(ruta)
     ruta.mkdir(parents=True, exist_ok=True)
 
-    guardados = []
+    pendientes = []
     for nombre, elemento in datos_dict.items():
         if isinstance(elemento, dict):
             ticker = elemento.get("ticker", nombre)
@@ -67,12 +72,59 @@ def guardar_datos_crudos(datos_dict, ruta=RUTA_DATOS_CRUDOS):
         if df is None or df.empty:
             logger.warning("No se guarda %s: sin datos disponibles.", nombre)
             continue
+        pendientes.append((ruta / nombre_archivo_crudo(ticker), df))
 
-        archivo = ruta / nombre_archivo_crudo(ticker)
+    existentes = [str(archivo) for archivo, _ in pendientes if archivo.exists()]
+    if existentes:
+        raise FileExistsError(
+            "Los datos crudos son inmutables y ya existen: "
+            f"{existentes}. No se sobrescribe ningún archivo.")
+
+    guardados = []
+    for archivo, df in pendientes:
         df.to_csv(archivo, index=True, encoding="utf-8")
         guardados.append(str(archivo))
 
     return guardados
+
+
+def cargar_resultados_crudos(tickers, ruta=RUTA_DATOS_CRUDOS):
+    """Lee los crudos guardados con la misma estructura que ``descargar_varios``.
+
+    Permite reejecutar el pipeline sin volver a descargar (DEC-021). Exige
+    que exista el archivo de cada ticker: si falta alguno lanza
+    ``FileNotFoundError`` (no se continúa con un universo incompleto).
+
+    Retorna:
+        dict {nombre_empresa: {"empresa", "ticker", "estado", "dataframe",
+        "advertencias", "error"}}.
+    """
+    ruta = Path(ruta)
+    faltantes = [ticker for ticker in tickers.values()
+                 if not (ruta / nombre_archivo_crudo(ticker)).exists()]
+    if faltantes:
+        raise FileNotFoundError(
+            f"Faltan datos crudos en {ruta} para: {faltantes}. "
+            "Ejecute la descarga con 'python -m src.pipeline --descargar'.")
+
+    resultados = {}
+    for nombre, ticker in tickers.items():
+        # round_trip: relee los floats bit a bit iguales a como se guardaron
+        # (el parser por defecto difiere en el último dígito, ~1e-16).
+        df = pd.read_csv(ruta / nombre_archivo_crudo(ticker), index_col=0,
+                         parse_dates=True, float_precision="round_trip")
+        df.index.name = "Date"
+        if df.empty:
+            raise ValueError(f"El archivo crudo de {nombre} ({ticker}) está vacío.")
+        resultados[nombre] = {
+            "empresa": nombre,
+            "ticker": ticker,
+            "estado": "ok",
+            "dataframe": df,
+            "advertencias": [],
+            "error": None,
+        }
+    return resultados
 
 
 def cargar_datos_crudos(ruta=RUTA_DATOS_CRUDOS):

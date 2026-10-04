@@ -59,8 +59,11 @@ FRECUENCIA = "1d"
 
 # Horizonte temporal
 FECHA_INICIO = "2020-01-01"
-# Si FECHA_FIN es None, se utiliza la fecha actual de ejecución.
-FECHA_FIN = None
+# DEC-021: fecha final FIJA de la muestra. Yahoo Finance trata ``end`` como
+# EXCLUSIVO: "2026-09-15" -> última observación 2026-09-14. Es la misma fecha
+# solicitada en la descarga original (datos/metadata/metadatos_descarga.json).
+# No volver a None: el bloque de prueba crecería con cada descarga.
+FECHA_FIN = "2026-09-15"
 
 # Columna de precio utilizada para calcular rendimientos.
 # "Adj Close" (precio ajustado) corrige dividendos y splits.

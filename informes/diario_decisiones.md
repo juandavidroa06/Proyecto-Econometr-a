@@ -306,4 +306,22 @@ Cada decisión se registra con el siguiente formato:
 
 ---
 
+### DEC-021: Fecha final fija, crudos protegidos y regeneración exacta de la partición
+
+- **Fecha:** 2026-10-03
+- **Fase:** Mantenimiento (antes de la Fase 7)
+- **Problema detectado:** (1) `python -m src.pipeline` (paso 2 del README) volvía a descargar con `FECHA_FIN = None`, **sobrescribía `datos/crudos/`** (viola la inmutabilidad, DEC-016) y alargaba el bloque de prueba; como también regeneraba `huellas.json`, las huellas no habrían detectado el cambio. (2) Los archivos de `datos/particiones/` no eran copia exacta de `datos/procesados/`: diferían en el último dígito (máx. 2,3e-13 en precios del orden de miles; 1,0e-16 en rendimientos log), probablemente porque la Fase 5 leyó los crudos con el lector de floats por defecto de pandas, que no es exacto.
+- **Decisión:**
+  - `FECHA_FIN = "2026-09-15"` en `config/settings.py`. Yahoo trata `end` como exclusivo: última observación 2026-09-14, idéntica a la descarga original (`fecha_fin_solicitada` en los metadatos). Resuelve el punto abierto (a) de DEC-019.
+  - `guardar_datos_crudos` lanza `FileExistsError` si algún archivo crudo ya existe, antes de escribir nada.
+  - El pipeline, por defecto, **lee los crudos guardados** (`cargar_resultados_crudos`, con `float_precision="round_trip"`) y no descarga. La descarga exige `--descargar` y solo funciona con `datos/crudos/` vacío.
+  - La Fase 5 compara las huellas nuevas con `huellas.json` antes de guardar (`comparar_con_huellas_guardadas`); si difieren lanza `ValueError` y no reescribe la partición.
+  - Con aprobación del usuario, se regeneraron `datos/particiones/` y `huellas.json` desde los crudos leídos de forma exacta.
+- **Evidencia:** Reprocesar los crudos con lectura exacta reproduce `datos/procesados/` bit a bit. Train y validación regenerados: mismas fechas y columnas, iguales a `datos/procesados/`, cambio máximo 2,3e-13 (precios) y 1,0e-16 (rendimientos). El bloque de prueba se regeneró con el mismo código, **sin abrirlo ni inspeccionarlo**. Una segunda ejecución del pipeline pasa la verificación de huellas (reproducible). Resultados de Fase 4 regenerados (`pruebas_*`, `saltos_reversibles.csv`): cambio ≤ 2,7e-15 y ninguna columna categórica (decisiones de las pruebas, fechas de saltos) cambia. Fase 6 reejecutada: parámetros ±5e-16, pesos y métricas ±1,4e-8 (tolerancia del optimizador SLSQP, igual que reejecutar sin cambios); se conservan los resultados versionados de DEC-020. 12 tests nuevos en `tests/test_proteccion_crudos.py` (90 en total).
+- **Alternativas consideradas:** Mantener la partición antigua (rechazada: el pipeline no podría reejecutarse completo); comparar huellas con tolerancia numérica (rechazada: obligaría a abrir el bloque de prueba desde `src/`); permitir sobrescribir crudos con una bandera (rechazada: una nueva descarga es una decisión metodológica que debe hacerse a mano y registrarse aquí).
+- **Impacto:** El pipeline es reproducible sin red y no puede alterar los crudos ni la partición congelada en silencio. Ninguna conclusión de las Fases 4 a 6 cambia.
+- **Estado:** Aplicada (pendiente de revisión del equipo).
+
+---
+
 *Las decisiones siguientes se registrarán conforme avance el proyecto.*

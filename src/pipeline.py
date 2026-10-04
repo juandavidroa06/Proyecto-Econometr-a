@@ -1,27 +1,35 @@
 """
-pipeline.py — Punto de entrada de las Fases 2, 3, 3.5 y 4
-======================================================
+pipeline.py — Punto de entrada de las Fases 2, 3, 3.5, 4 y 5
+==========================================================
 
 Orquesta el flujo completo reproducible:
 
-    1. Descargar datos desde Yahoo Finance.
-    2. Guardar los datos crudos (sin modificar).
-    3. Registrar metadatos de la descarga.
-    4. Validar la calidad de los datos y generar reporte.
-    5. Imputar valores faltantes (Filtro de Kalman) y procesar rendimientos.
-    6. Guardar datasets procesados con banderas de imputación.
-    7. Validar la imputación (prueba artificial MAE/RMSE) y comparar antes/después.
-    8. Análisis exploratorio (estadísticas, volatilidad, correlaciones, outliers).
-    9. Generar gráficos.
-    10. Resumen descriptivo.
+    1. Cargar los datos crudos ya guardados (por defecto) o, solo con
+       ``--descargar``, descargarlos de Yahoo Finance, guardarlos sin
+       modificar y registrar metadatos.
+    2. Validar la calidad de los datos y generar reporte.
+    3. Imputar valores faltantes (Filtro de Kalman) y procesar rendimientos.
+    4. Guardar datasets procesados con banderas de imputación.
+    5. Validar la imputación (prueba artificial MAE/RMSE) y comparar antes/después.
+    6. Análisis exploratorio (estadísticas, volatilidad, correlaciones, outliers).
+    7. Generar gráficos.
+    8. Resumen descriptivo.
+    9. Fase 4 (partición, iliquidez, saltos, pruebas) y Fase 5 (partición
+       congelada con huellas).
 
 Ejecución (desde la raíz del proyecto):
-    python -m src.pipeline
+    python -m src.pipeline              # reprocesa desde datos/crudos/
+    python -m src.pipeline --descargar  # solo si datos/crudos/ está vacío
 
-El código es tolerante a fallos: si una etapa falla, se registra el error
-y se continúa con las siguientes cuando es posible.
+DEC-021: ``datos/crudos/`` es inmutable. La descarga nunca sobrescribe
+crudos existentes (lanza FileExistsError) y la Fase 5 no regenera la
+partición si sus huellas SHA-256 cambian (lanza ValueError).
+
+Si falla la descarga de una empresa se registra el error y se continúa con
+las demás; los errores de las otras etapas se propagan.
 """
 
+import argparse
 import logging
 import sys
 from pathlib import Path
@@ -51,6 +59,7 @@ from src.data.yahoo_downloader import descargar_varios, fecha_fin_resuelta  # no
 from src.data.metadata import crear_metadatos_consolidados, guardar_metadatos  # noqa: E402
 from src.data.data_validator import validar_varios, guardar_reporte_calidad  # noqa: E402
 from src.data.data_manager import (  # noqa: E402
+    cargar_resultados_crudos,
     guardar_datos_crudos,
     procesar_con_imputacion,
     guardar_conjunto_procesado,
@@ -67,8 +76,19 @@ def _configurar_logging():
     )
 
 
+def etapa_carga_crudos():
+    """Carga los crudos ya guardados, sin descargar (DEC-021)."""
+    resultados = cargar_resultados_crudos(TICKERS, RUTA_DATOS_CRUDOS)
+    logger.info("Datos crudos cargados desde %s: %d empresas",
+                RUTA_DATOS_CRUDOS, len(resultados))
+    return resultados
+
+
 def etapa_descarga():
-    """Fase 2: descarga y guardado de datos crudos + metadatos."""
+    """Fase 2: descarga y guardado de datos crudos + metadatos.
+
+    Falla (FileExistsError) si ya existen crudos: no se sobrescriben.
+    """
     fecha_fin = fecha_fin_resuelta(FECHA_FIN)
     logger.info("Descargando %d empresas desde %s hasta %s (intervalo %s)",
                 len(TICKERS), FECHA_INICIO, fecha_fin, FRECUENCIA)
@@ -315,24 +335,30 @@ def etapa_fase5(conjunto):
         verificar_sin_leakage,
         guardar_particiones,
         guardar_huellas,
+        comparar_con_huellas_guardadas,
         huella,
     )
 
     series = {"rendimientos_log": conjunto["rend_log"],
               "precios": conjunto["precios"]}
     huellas = {}
-    part_rend = None
+    particiones = {}
     for nombre_base, df in series.items():
         part = particion_temporal(df, FECHA_FIN_TRAIN, FECHA_FIN_VALIDACION)
         verificar_sin_leakage(part, df)
-        guardar_particiones(part, RUTA_PARTICIONES, nombre_base)
         for bloque in NOMBRES_BLOQUES:
             huellas[f"{nombre_base}_{bloque}"] = huella(part[bloque])
-        if nombre_base == "rendimientos_log":
-            part_rend = part
-    guardar_huellas(huellas, RUTA_PARTICIONES / "huellas.json")
+        particiones[nombre_base] = part
+
+    # DEC-021: si ya hay una partición congelada, debe coincidir exactamente.
+    ruta_huellas = RUTA_PARTICIONES / "huellas.json"
+    if comparar_con_huellas_guardadas(huellas, ruta_huellas):
+        logger.info("Fase 5: la partición coincide con las huellas registradas.")
+    for nombre_base, part in particiones.items():
+        guardar_particiones(part, RUTA_PARTICIONES, nombre_base)
+    guardar_huellas(huellas, ruta_huellas)
     logger.info("Fase 5: particiones guardadas en %s", RUTA_PARTICIONES)
-    return part_rend
+    return particiones["rendimientos_log"]
 
 
 def _prefijo(nombre_empresa):
@@ -342,11 +368,18 @@ def _prefijo(nombre_empresa):
     return ticker.replace(".", "_")
 
 
-def main():
+def main(argv=None):
+    parser = argparse.ArgumentParser(
+        description="Pipeline de datos y análisis exploratorio (Fases 2 a 5).")
+    parser.add_argument(
+        "--descargar", action="store_true",
+        help="Descargar desde Yahoo Finance (solo si datos/crudos/ está vacío).")
+    args = parser.parse_args(argv)
+
     _configurar_logging()
     logger.info("=== INICIO: Fases 2, 3 y 3.5 ===")
 
-    resultados = etapa_descarga()
+    resultados = etapa_descarga() if args.descargar else etapa_carga_crudos()
     reporte_calidad = etapa_validacion(resultados)
     conjunto = etapa_procesamiento(resultados)
     etapa_imputacion(resultados, conjunto)

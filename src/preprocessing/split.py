@@ -153,6 +153,28 @@ def guardar_huellas(huellas, ruta):
                     encoding="utf-8")
 
 
+def comparar_con_huellas_guardadas(huellas, ruta):
+    """Compara huellas recién calculadas con las ya registradas (DEC-021).
+
+    Si ``ruta`` no existe no hay nada que comparar (primera partición) y
+    devuelve False. Si existe y alguna huella difiere o falta, lanza
+    ValueError: la partición congelada no puede cambiar en silencio.
+    Devuelve True si todas coinciden.
+    """
+    ruta = Path(ruta)
+    if not ruta.exists():
+        return False
+    guardadas = json.loads(ruta.read_text(encoding="utf-8"))
+    distintas = sorted(clave for clave in set(guardadas) | set(huellas)
+                       if guardadas.get(clave) != huellas.get(clave))
+    if distintas:
+        raise ValueError(
+            "La partición congelada cambió respecto a las huellas registradas "
+            f"en {ruta}: {distintas}. No se sobrescribe; revisar los datos y "
+            "registrar la decisión en el diario antes de regenerarla.")
+    return True
+
+
 def verificar_huellas(carpeta, nombre_base, ruta_huellas, bloques=("train", "validacion")):
     """Comprueba que los archivos guardados no fueron alterados.
 
