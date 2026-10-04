@@ -342,4 +342,26 @@ Cada decisión se registra con el siguiente formato:
 
 ---
 
+### DEC-023: Fase 7 — ARIMA (media) y GARCH(1,1) (volatilidad)
+
+- **Fecha:** 2026-10-04
+- **Fase:** Fase 7 — Econometría
+- **Decisión (diseño):**
+  - Rendimiento logarítmico diario por empresa; cada serie usa sus propios días con dato (se descartan explícitamente los NaN de esa empresa, sin imputar). Parámetros estimados **solo con entrenamiento**; evaluación en validación con pronósticos **a un paso y parámetros fijos** (el valor de t usa datos hasta t−1). Sin reestimación dentro de validación (eso es el backtesting walk-forward, Fase 14). Prueba no utilizada.
+  - **ARIMA(p,0,q)** con constante, d = 0 (ADF/KPSS de la Fase 4 en entrenamiento: las 9 series son estacionarias). Rejilla p, q ≤ 3, selección por **BIC** entre los modelos que convergen. Referencias: pronóstico cero y media de entrenamiento. Métricas MAE, RMSE y Diebold-Mariano (pérdida cuadrática, corrección HLN).
+  - **GARCH(1,1)** con media constante e innovaciones **t de Student** (Jarque-Bera rechaza normalidad en las 9). Referencias: varianza constante de entrenamiento y EWMA RiskMetrics (λ = 0,94, sin estimación). Proxy de la varianza: r_t². Métricas QLIKE robusto (admite r_t = 0) y MSE; Diebold-Mariano sobre QLIKE.
+  - Ajustes en rendimientos ×100: con rendimientos en proporción el optimizador de `statsmodels` declaraba "no convergencia" en modelos simples (AR(1) de Promigas y Grupo Bolívar, MA(1) de Davivienda) con los mismos parámetros y BIC; en % convergen. Tras el cambio solo 10 de 144 modelos de la rejilla no convergen, todos con p + q ≥ 5; quedan registrados en `fase7_arima_seleccion.csv`.
+  - Dependencia nueva: `arch==8.0.0` (no cambió ninguna otra versión).
+- **Resultados (validación 2024; son hallazgos, no conclusiones definitivas):**
+  - **Media (ARIMA):** órdenes elegidos (0,0) en 4 empresas, AR(1) en Ecopetrol y Mineros, AR(2) en Celsia, MA(1) en Promigas, MA(3) en ETB. **Ningún ARIMA pronostica mejor que la media de entrenamiento ni que el cero** (Diebold-Mariano p > 0,14 en las 9). La autocorrelación detectada en entrenamiento (Fase 4) no se traduce en capacidad predictiva fuera de muestra.
+  - **Volatilidad (GARCH), 4 líquidas:** GARCH supera a la varianza constante con significancia en Banco de Bogotá y Ecopetrol (p < 0,001), no en Celsia (p = 0,24) ni Davivienda (p = 0,08). **No supera a EWMA en ninguna**; EWMA tiene menor QLIKE en las 4 y es significativamente mejor en Celsia (p = 0,050). La persistencia α + β es ≈ 1 (0,92–1,00), cercana a un IGARCH, que es justamente lo que impone EWMA.
+  - **Volatilidad, 5 ilíquidas:** resultados poco fiables. ETB (91 % de rendimientos cero en validación): ω ≈ 0, la varianza pronosticada colapsa a ~5e-7 tras cada racha sin negociación y un movimiento de −10,5 % dispara la pérdida (QLIKE ≈ 1,25 millones): **GARCH no es adecuado para ETB**. Promigas: GARCH significativamente peor que la varianza constante (sobreestima el nivel). Grupo Bolívar: mejor que la constante (p = 0,008), igual a EWMA. Grados de libertad ν entre 2,1 y 2,5 en las ilíquidas (colas extremas, efecto de los días sin negociación).
+  - **Diagnósticos:** sin autocorrelación remanente en z_t² salvo Davivienda (p = 0,026) y Ecopetrol al borde (p = 0,053). En 6 empresas la persistencia toca el límite α + β = 1 (`estacionario = False` cuando es exactamente 1).
+- **Implicaciones para fases siguientes:** (1) Para la media no hay evidencia de que ARIMA aporte sobre una media constante: en la optimización (Fase 12) usar ARIMA como estimador de rendimientos esperados no está justificado con esta evidencia. (2) Para la volatilidad de las líquidas, EWMA es una referencia exigente que GARCH no supera; la Fase 11 (riesgo) debería comparar ambos. (3) Las 5 ilíquidas requieren otro tratamiento (o exclusión) para modelos de volatilidad; refuerza el universo de 4 líquidas de DEC-020.
+- **Alternativas consideradas:** selección por AIC (rechazada: con ~1 000 observaciones tiende a sobreajustar); GARCH con errores normales (rechazada: colas pesadas); EGARCH/GJR (aplazadas: primero establecer si el GARCH básico supera referencias simples, y no lo hace frente a EWMA); reestimar en cada paso (aplazada a la Fase 14); un único criterio en validación para elegir el modelo final (no se elige aún; validación solo compara).
+- **Evidencia utilizada:** `resultados/fase7_arima.csv`, `fase7_arima_seleccion.csv`, `fase7_garch.csv`, `fase7_pronosticos_validacion.csv`, `resultados/graficos/fase7_volatilidad_validacion.png`; código en `src/econometrics/` (`arima.py`, `garch.py`, `evaluacion.py`, `fase7.py`); 12 tests en `tests/test_econometria_fase7.py` (incluyen que los pronósticos no cambian al alterar datos futuros).
+- **Estado:** Pendiente de aprobación del equipo.
+
+---
+
 *Las decisiones siguientes se registrarán conforme avance el proyecto.*

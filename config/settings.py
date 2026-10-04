@@ -138,6 +138,25 @@ PESO_MAXIMO_ACTIVO = 0.30
 TASA_LIBRE_RIESGO_ANUAL = 0.0
 
 # =============================================================================
+# CONFIGURACIÓN DE ECONOMETRÍA (Fase 7 — ARIMA y GARCH, DEC-023)
+# =============================================================================
+
+# Rejilla de órdenes ARIMA(p, 0, q) y criterio de selección (sobre train).
+ARIMA_MAX_P = 3
+ARIMA_MAX_Q = 3
+ARIMA_CRITERIO = "bic"   # más parsimonioso que AIC con ~1 000 observaciones
+
+# Distribución de las innovaciones del GARCH(1,1): "t" (colas pesadas,
+# Jarque-Bera rechaza normalidad en las 9 series) o "normal".
+GARCH_DISTRIBUCION = "t"
+
+# Referencia RiskMetrics para la varianza (no se estima).
+EWMA_LAMBDA = 0.94
+
+# Rezagos de Ljung-Box en los diagnósticos de residuos.
+REZAGOS_DIAGNOSTICO = 10
+
+# =============================================================================
 # CONFIGURACIÓN DE VISUALIZACIÓN
 # =============================================================================
 

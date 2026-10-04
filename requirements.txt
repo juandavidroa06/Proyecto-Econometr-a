@@ -33,6 +33,7 @@ pytz==2026.3.post1
 # --- Desarrollo y pruebas ---
 pytest==9.1.1
 
-# --- Econometría avanzada (se instalará en fases posteriores) ---
-# No se utiliza en Fases 2 y 3. Se deja referenciada para fases futuras.
-# arch==6.0.0
+# --- Econometría avanzada (Fase 7: GARCH, DEC-023) ---
+# 8.0.0 es compatible con Python 3.14 y con las versiones fijadas arriba
+# (no cambió ninguna otra dependencia al instalarla).
+arch==8.0.0
