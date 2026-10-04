@@ -400,4 +400,29 @@ Cada decisión se registra con el siguiente formato:
 
 ---
 
+### DEC-026: Fase 9 — Redes neuronales MLP y LSTM
+
+- **Fecha:** 2026-10-04
+- **Fase:** Fase 9 — Red neuronal
+- **Decisión (diseño):**
+  - **Librería:** PyTorch 2.14.1 (CPU). TensorFlow no tiene versión para Python 3.14.
+  - **Mismo problema y filas que la Fase 8:** objetivo r_{t+1}, panel agrupado de las 9 empresas, filas asignadas por fecha del objetivo (`src/machine_learning/variables.py`).
+  - **MLP:** las mismas variables de la Fase 8, estandarizadas con media y desviación **solo de entrenamiento**; rejilla: capas ocultas (32) o (64, 32) y decaimiento de pesos 1e-4 o 1e-2; abandono 0,2.
+  - **LSTM:** secuencias de los **últimos 30 días** de la empresa (rendimiento, volumen relativo, mercado, TRM y Brent, como en el borrador) + indicador de empresa en la capa de salida; rejilla: 16 o 32 unidades y decaimiento 1e-4 o 1e-2. Ventanas con algún faltante se descartan (no se imputa).
+  - **Selección y parada temprana:** el último 20 % de fechas objetivo de **entrenamiento** es el conjunto de parada (nunca validación). Escaladores ajustados con la parte de ajuste durante la selección y con todo entrenamiento en el modelo final.
+  - **Modelo final:** por cada una de 5 semillas fijas (42–46) se busca la época óptima con el conjunto de parada y se reentrena con todo entrenamiento durante esas épocas; la predicción es el promedio de las 5 (conjunto). Adam, MSE, lotes de 256, objetivo en % para estabilidad numérica, algoritmos deterministas.
+  - **Comparación** en validación sobre las **mismas filas** para todos los modelos (MLP, LSTM, Random Forest, Gradient Boosting, ARIMA, media, cero): 1 631 filas. Se excluyen 488 de las 2 119 de la Fase 8 porque la LSTM necesita 30 días completos: 216 son ventanas que incluyen el 2024-05-03 (precio inválido, DEC-022) y el resto, otros días sin precio (más en ETB, Nutresa y Promigas).
+- **Resultados (validación 2024; hallazgos, no conclusiones definitivas):**
+  - Elegidos: MLP (64, 32) con decaimiento 1e-4; LSTM de 32 unidades con decaimiento 1e-4. Épocas óptimas entre 18 y 70.
+  - En el conjunto de parada (final de entrenamiento) el MLP reducía el MSE 7,7 % frente a la media y la LSTM 2,9 %; **en validación esa ventaja desaparece**.
+  - Validación, las 9 empresas juntas: RMSE MLP 0,01917, LSTM 0,01913, Random Forest 0,01905, Gradient Boosting 0,01903, media de entrenamiento 0,01915, ARIMA 0,01924. **Ni el MLP ni la LSTM superan a la media** (Diebold-Mariano p = 0,84 y 0,80).
+  - Por empresa: MLP y LSTM son significativamente mejores que la media solo en Promigas (p ≈ 0,02), donde también ARIMA mejora a la media (la media de entrenamiento de Promigas se alejó de su comportamiento en 2024); el MLP es significativamente **peor** que la media en ETB (p = 0,037). Con 18 pruebas al 5 % se esperaría cerca de 1 resultado significativo por azar.
+  - **Variabilidad entre semillas:** el RMSE de la LSTM varía entre semillas con desviación 0,00015 (máximo 0,01945), mayor que las diferencias entre modelos. Sin promediar semillas, el resultado de una red dependería de la inicialización.
+- **Implicación:** Con estos datos y variables, ninguna familia de modelos (ARIMA, Random Forest, Gradient Boosting, MLP, LSTM) predice el rendimiento diario mejor que una media constante de forma estadísticamente distinguible. Coincide con la advertencia del borrador ("una red neuronal no es automáticamente mejor") y es un resultado válido para la Fase 10 (comparación de modelos).
+- **Alternativas consideradas:** TensorFlow (no disponible para Python 3.14); `MLPRegressor` de scikit-learn (rechazada: no ofrece LSTM y conviene una sola librería para ambas redes); elegir hiperparámetros o la época con validación (rechazada: sesgaría la comparación); una sola semilla (rechazada: la variabilidad entre semillas es del mismo orden que las diferencias entre modelos); LSTM por empresa (rechazada: pocas secuencias por empresa).
+- **Evidencia utilizada:** `resultados/fase9_*.csv` (selección, hiperparámetros, épocas, métricas, dispersión entre semillas, pronósticos); código en `src/neural_networks/` (`datos.py`, `redes.py`, `fase9.py`); 7 tests en `tests/test_redes_fase9.py` (escalado solo con ajuste, secuencias sin futuro, ventanas con faltantes descartadas, conjunto de parada al final, entrenamiento reproducible). Dependencia nueva: `torch==2.14.1`.
+- **Estado:** Pendiente de aprobación del equipo.
+
+---
+
 *Las decisiones siguientes se registrarán conforme avance el proyecto.*

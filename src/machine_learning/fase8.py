@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
 TIPOS = ("random_forest", "gradient_boosting")
 
 
-def _cargar():
+def cargar_datos():
     datos = {base: cargar_entrenamiento_validacion(RUTA_PARTICIONES, base)
              for base in ("rendimientos_log", "volumen", "externos")}
     unir = lambda d: pd.concat([d["train"], d["validacion"]])
@@ -44,7 +44,7 @@ def _cargar():
             unir(datos["externos"]), datos["rendimientos_log"]["train"])
 
 
-def _matriz(df, columnas, empresas):
+def matriz_variables(df, columnas, empresas):
     """Variables + indicadores de empresa (one-hot con categorías fijas)."""
     X = df[columnas].copy()
     for e in empresas:
@@ -53,13 +53,13 @@ def _matriz(df, columnas, empresas):
 
 
 def ejecutar_fase8(guardar=True):
-    rend, vol, ext, rend_train = _cargar()
+    rend, vol, ext, rend_train = cargar_datos()
     panel = variables.construir_panel(rend, vol, ext)
     train, valid, resumen_filas = variables.separar(panel, FECHA_FIN_TRAIN,
                                                     FECHA_FIN_VALIDACION)
     columnas = variables.columnas_variables(panel)
     empresas = list(rend.columns)
-    X_tr, X_va = _matriz(train, columnas, empresas), _matriz(valid, columnas, empresas)
+    X_tr, X_va = matriz_variables(train, columnas, empresas), matriz_variables(valid, columnas, empresas)
     y_tr, y_va = train["objetivo"], valid["objetivo"]
     logger.info("Filas: %s", resumen_filas.to_dict("records"))
 

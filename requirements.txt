@@ -42,3 +42,9 @@ arch==8.0.0
 # Instala además joblib, threadpoolctl y cloudpickle; no cambió ninguna
 # versión de las dependencias anteriores.
 scikit-learn==1.9.1
+
+# --- Redes neuronales (Fase 9: MLP y LSTM, DEC-026) ---
+# TensorFlow no tiene versión para Python 3.14; se usa PyTorch (CPU). Instala
+# además filelock, fsspec, Jinja2, MarkupSafe, mpmath, networkx, setuptools y
+# sympy; no cambió ninguna versión de las dependencias anteriores.
+torch==2.14.1

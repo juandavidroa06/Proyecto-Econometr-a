@@ -1,6 +1,6 @@
 # Portafolio Colombiano — Proyecto de Econometría
 
-> **Estado del proyecto:** En desarrollo — Fases 0 a 8 implementadas; siguiente: Fase 9 (Red neuronal)
+> **Estado del proyecto:** En desarrollo — Fases 0 a 9 implementadas; siguiente: Fase 10 (Comparación de modelos)
 > **Última actualización:** Octubre 2026
 
 ---
@@ -52,7 +52,7 @@ código y en `informes/diario_decisiones.md`):
 | Visualización | matplotlib, seaborn |
 | Econometría | statsmodels, arch 8.0.0 |
 | Machine Learning | scikit-learn 1.9.1 |
-| Redes neuronales | TensorFlow / PyTorch (por definir) |
+| Redes neuronales | PyTorch 2.14.1 (CPU) |
 | Control de versiones | Git |
 | Notebooks | Jupyter |
 
@@ -71,7 +71,8 @@ código y en `informes/diario_decisiones.md`):
 │   ├── exploratory_analysis/  # Estadística descriptiva, correlaciones, gráficos, outliers
 │   ├── portfolio/     # Markowitz y métricas de portafolio (Fase 6)
 │   ├── econometrics/  # ARIMA, GARCH y métricas de pronóstico (Fase 7)
-│   └── machine_learning/  # Variables, Random Forest y Gradient Boosting (Fase 8)
+│   ├── machine_learning/  # Variables, Random Forest y Gradient Boosting (Fase 8)
+│   └── neural_networks/   # MLP y LSTM en PyTorch (Fase 9)
 ├── modelos/           # Modelos entrenados (fases posteriores)
 ├── resultados/        # Métricas, reportes y gráficos
 │   └── graficos/      # Gráficos del análisis exploratorio
@@ -97,6 +98,7 @@ Fases implementadas (las decisiones marcadas como pendientes requieren aprobaci�
 6. **Fase 6 — Modelo de referencia, Markowitz:** benchmark con portafolios de igual ponderación (1/N), mínima varianza y máximo Sharpe, estimados solo con entrenamiento y evaluados en entrenamiento y validación, con restricciones de suma 1, sin posiciones cortas y peso máximo de 30 % por activo (DEC-020). Código en `src/portfolio/`; se ejecuta con `python -m src.portfolio.fase6`. No se usó el bloque de prueba. Pendiente: definir cuál portafolio es el benchmark oficial y la tasa libre de riesgo (hoy 0, provisional).
 7. **Fase 7 — Econometría:** ARIMA(p,0,q) elegido por BIC y GARCH(1,1) con errores t, estimados solo con entrenamiento y evaluados con pronósticos a un paso en validación frente a referencias simples (media, cero, varianza constante y EWMA), con pruebas de Diebold-Mariano (DEC-023). Código en `src/econometrics/`; se ejecuta con `python -m src.econometrics.fase7`. Hallazgos: ningún ARIMA supera a la media de entrenamiento; GARCH supera a la varianza constante en Banco de Bogotá y Ecopetrol, pero no a EWMA en ninguna acción líquida; en acciones ilíquidas (ETB sobre todo) el GARCH no es fiable.
 8. **Fase 8 — Machine Learning:** Random Forest y Gradient Boosting (scikit-learn) agrupados para las 9 empresas, que predicen el rendimiento del día siguiente con rezagos, volatilidad, volumen, mercado, TRM y Brent. Los hiperparámetros se eligen con validación cruzada temporal dentro de entrenamiento y los modelos se comparan en validación contra la media, el cero y ARIMA (DEC-025). Código en `src/machine_learning/`; se ejecuta con `python -m src.machine_learning.fase8`. Hallazgo: la mejora frente a la media (≈ 0,3 % del RMSE) no es significativa.
+9. **Fase 9 — Redes neuronales:** MLP y LSTM (PyTorch; la LSTM usa los últimos 30 días) para el rendimiento del día siguiente, con hiperparámetros y parada temprana elegidos con el final de entrenamiento y un conjunto de 5 semillas (DEC-026). Código en `src/neural_networks/`; se ejecuta con `python -m src.neural_networks.fase9` (unos 5 minutos en CPU). Hallazgo: ninguna red supera a la media de entrenamiento en validación, igual que ARIMA, Random Forest y Gradient Boosting.
 
 Empresas incluidas (tickers de Yahoo Finance):
 
