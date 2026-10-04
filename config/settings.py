@@ -69,6 +69,13 @@ FECHA_FIN = "2026-09-15"
 # "Adj Close" (precio ajustado) corrige dividendos y splits.
 PRECIO_RENDIMIENTOS = "Adj Close"
 
+# DEC-022: fechas en que el precio de Yahoo Finance es INVÁLIDO para todas
+# las empresas (error de la fuente, contrastado con una segunda fuente). En la
+# capa procesada el precio queda NaN con bandera y el rendimiento siguiente
+# abarca varios días. Los crudos no se modifican. No agregar fechas sin
+# evidencia registrada en el diario.
+FECHAS_DATO_INVALIDO_FUENTE = ("2024-05-03",)
+
 # Días bursátiles por año (aproximación convencional, no universal).
 DIAS_BURSATILES_ANIO = 252
 

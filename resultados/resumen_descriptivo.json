@@ -1,42 +1,42 @@
 {
     "activo_mayor_rendimiento_medio": "Nutresa",
-    "rendimiento_medio": 0.0015834310511693666,
+    "rendimiento_medio": 0.0015843635782901964,
     "activo_mayor_volatilidad": "Nutresa",
-    "volatilidad_mayor": 0.031931158581997764,
+    "volatilidad_mayor": 0.030799779802529684,
     "activo_menor_volatilidad": "Celsia",
-    "volatilidad_menor": 0.01852337130777106,
+    "volatilidad_menor": 0.01827641102613775,
     "pares_mayor_correlacion": [
         {
             "activo_a": "Banco Davivienda PF",
             "activo_b": "Ecopetrol",
-            "correlacion": 0.33467895951193616
+            "correlacion": 0.32683564233751683
         },
         {
             "activo_a": "Celsia",
             "activo_b": "Banco Davivienda PF",
-            "correlacion": 0.31757460757886913
+            "correlacion": 0.2998798499223247
         },
         {
-            "activo_a": "Banco Davivienda PF",
-            "activo_b": "Mineros SA",
-            "correlacion": 0.239757480158536
+            "activo_a": "Banco de Bogota",
+            "activo_b": "Banco Davivienda PF",
+            "correlacion": 0.2734242414606282
         }
     ],
     "pares_menor_correlacion": [
         {
-            "activo_a": "Banco de Bogota",
-            "activo_b": "Promigas",
-            "correlacion": 0.004490977658136667
-        },
-        {
-            "activo_a": "Nutresa",
-            "activo_b": "Celsia",
-            "correlacion": -0.008557546655297024
-        },
-        {
             "activo_a": "ETB",
             "activo_b": "Grupo Bolivar",
-            "correlacion": 0.023364296055070087
+            "correlacion": 0.012246789476399952
+        },
+        {
+            "activo_a": "Promigas",
+            "activo_b": "Nutresa",
+            "correlacion": 0.01781164255642499
+        },
+        {
+            "activo_a": "Mineros SA",
+            "activo_b": "ETB",
+            "correlacion": 0.02791633629075958
         }
     ],
     "empresa_mas_observaciones": "Mineros SA",

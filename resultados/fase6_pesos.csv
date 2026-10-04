@@ -8,33 +8,33 @@ universo,portafolio,empresa,peso
 9_empresas,igual,Promigas,0.1111111111111111
 9_empresas,igual,Mineros SA,0.1111111111111111
 9_empresas,igual,Grupo Bolivar,0.1111111111111111
-9_empresas,min_var,Celsia,0.16950711987375447
-9_empresas,min_var,Banco de Bogota,0.10358177352652971
-9_empresas,min_var,Ecopetrol,0.01651403700255376
-9_empresas,min_var,ETB,0.08069400942423877
-9_empresas,min_var,Nutresa,0.0717074053914443
-9_empresas,min_var,Banco Davivienda PF,0.07175628331132765
-9_empresas,min_var,Promigas,0.18715988556051683
-9_empresas,min_var,Mineros SA,0.14751866197475047
-9_empresas,min_var,Grupo Bolivar,0.15156082393488396
-9_empresas,max_sharpe,Celsia,0.13852982840501538
-9_empresas,max_sharpe,Banco de Bogota,0.0
-9_empresas,max_sharpe,Ecopetrol,0.2999999999999998
+9_empresas,min_var,Celsia,0.16950711957628206
+9_empresas,min_var,Banco de Bogota,0.10358177330425004
+9_empresas,min_var,Ecopetrol,0.016514037465122994
+9_empresas,min_var,ETB,0.08069400946324422
+9_empresas,min_var,Nutresa,0.07170740536610848
+9_empresas,min_var,Banco Davivienda PF,0.0717562801423085
+9_empresas,min_var,Promigas,0.18715988743428688
+9_empresas,min_var,Mineros SA,0.1475186631127737
+9_empresas,min_var,Grupo Bolivar,0.1515608241356232
+9_empresas,max_sharpe,Celsia,0.13852984238982646
+9_empresas,max_sharpe,Banco de Bogota,5.1696552787012156e-17
+9_empresas,max_sharpe,Ecopetrol,0.30000000000000004
 9_empresas,max_sharpe,ETB,0.0
-9_empresas,max_sharpe,Nutresa,0.29999999999999993
-9_empresas,max_sharpe,Banco Davivienda PF,0.0
-9_empresas,max_sharpe,Promigas,0.10398866554189916
-9_empresas,max_sharpe,Mineros SA,2.2633981608938863e-17
-9_empresas,max_sharpe,Grupo Bolivar,0.15748150605308564
+9_empresas,max_sharpe,Nutresa,0.2999999999999999
+9_empresas,max_sharpe,Banco Davivienda PF,1.7225559920266398e-16
+9_empresas,max_sharpe,Promigas,0.10398865484552361
+9_empresas,max_sharpe,Mineros SA,0.0
+9_empresas,max_sharpe,Grupo Bolivar,0.1574815027646498
 liquidas,igual,Celsia,0.25
 liquidas,igual,Banco de Bogota,0.25
 liquidas,igual,Ecopetrol,0.25
 liquidas,igual,Banco Davivienda PF,0.25
-liquidas,min_var,Celsia,0.29999999999999993
-liquidas,min_var,Banco de Bogota,0.23872743431380158
-liquidas,min_var,Ecopetrol,0.16127256568619844
-liquidas,min_var,Banco Davivienda PF,0.29999999999999993
-liquidas,max_sharpe,Celsia,0.29999999999999977
-liquidas,max_sharpe,Banco de Bogota,0.3000000000000001
-liquidas,max_sharpe,Ecopetrol,0.3000000000000001
-liquidas,max_sharpe,Banco Davivienda PF,0.10000000000000003
+liquidas,min_var,Celsia,0.3000000000000001
+liquidas,min_var,Banco de Bogota,0.2387274380217637
+liquidas,min_var,Ecopetrol,0.161272561978236
+liquidas,min_var,Banco Davivienda PF,0.3000000000000001
+liquidas,max_sharpe,Celsia,0.2999999999999992
+liquidas,max_sharpe,Banco de Bogota,0.3000000000000002
+liquidas,max_sharpe,Ecopetrol,0.2999999999999994
+liquidas,max_sharpe,Banco Davivienda PF,0.10000000000000124

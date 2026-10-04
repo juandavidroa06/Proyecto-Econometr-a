@@ -1,8 +1,8 @@
 {
   "precios_test": "1ede1c92597d81d78339748e73989a2ec01f5bc6480399b003119d8805c2c07c",
   "precios_train": "b8d05cb246472a51a17edc56de025eb15552f2848dc298c0959333903f4e7584",
-  "precios_validacion": "565b96b1bf1d779ae0a93f323e186bfee349fed221952396e9e0c4179f7ec58c",
+  "precios_validacion": "dfc69d717466bed5c31c1af3a802fc93892489e880de7f9d494518d3efebec15",
   "rendimientos_log_test": "43b97ede5f51c52e8e4f626f2e5140b1274b3d6f15e6cf0119a84360b75c45da",
   "rendimientos_log_train": "87974447b4f7895c29e7cf14a9c976677f715dc2db8dfcacbb2a3ea6fa1b9f9f",
-  "rendimientos_log_validacion": "bec34847529d6b25e5b216172ef7938b83ca27a63ad9717f952961c01c6b88c4"
+  "rendimientos_log_validacion": "094eae73631b4fed93b24ac5139029288270a0aed64f7f3fb6dfbdf5b57bb7eb"
 }

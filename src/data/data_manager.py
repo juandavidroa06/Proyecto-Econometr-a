@@ -21,7 +21,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from config.settings import PRECIO_RENDIMIENTOS
+from config.settings import FECHAS_DATO_INVALIDO_FUENTE, PRECIO_RENDIMIENTOS
 from config.environment import RUTA_DATOS_CRUDOS, RUTA_DATOS_PROCESADOS
 
 logger = logging.getLogger(__name__)
@@ -278,26 +278,34 @@ def guardar_dataset_analisis(dataset, ruta=RUTA_DATOS_PROCESADOS):
 
 ARCHIVO_BANDERA_IMPUTACION = "banderas_imputacion.csv"
 ARCHIVO_RETORNO_DEPENDE = "retorno_depende_imputacion.csv"
+ARCHIVO_BANDERA_INVALIDO = "banderas_dato_invalido.csv"
 
 
-def procesar_con_imputacion(datos_dict, columna=PRECIO_RENDIMIENTOS):
+def procesar_con_imputacion(datos_dict, columna=PRECIO_RENDIMIENTOS,
+                            fechas_invalidas=FECHAS_DATO_INVALIDO_FUENTE):
     """Procesa los datos crudos e incorpora imputación de faltantes.
 
     Pasos:
         1. Itera por empresa sobre su propia serie (índice continuo) y aplica
            el Filtro de Kalman solo a los NaN reales de esa serie.
         2. Construye DataFrames anchos de precios imputados y de banderas.
-        3. Calcula rendimientos (simple y log) sobre precios imputados.
+        3. Anula (NaN + bandera) los precios de ``fechas_invalidas`` (DEC-022)
+           DESPUÉS de imputar, para que Kalman no los rellene, y calcula
+           rendimientos (simple y log) saltando esas fechas.
         4. Calcula la bandera ``retorno_depende_imputacion``.
         5. Construye el dataset largo con trazabilidad.
 
     Retorna:
         dict con claves: precios (imputados), bandera (ancho), rend_simples,
-        rend_log, retorno_depende, dataset, reporte_imputaciones y
-        precios_crudos (para comparaciones antes/después).
+        rend_log, retorno_depende, bandera_invalido, retorno_abarca_invalido,
+        dataset, reporte_imputaciones y precios_crudos (para comparaciones
+        antes/después).
     """
     from src.preprocessing.kalman_imputation import imputar_serie
-    from src.preprocessing.returns import calcular_rendimientos
+    from src.preprocessing.invalid_data import (
+        bandera_dato_invalido,
+        rendimientos_saltando_invalidos,
+    )
 
     series_imputadas = {}
     banderas = {}
@@ -331,13 +339,20 @@ def procesar_con_imputacion(datos_dict, columna=PRECIO_RENDIMIENTOS):
     bandera = bandera.fillna(False).astype(bool)
     bandera.index.name = "Date"
 
-    rend_simples, rend_log = calcular_rendimientos(precios)
+    bandera_invalido = bandera_dato_invalido(precios, fechas_invalidas)
+    if (bandera & bandera_invalido).any().any():
+        raise ValueError("Una fecha inválida coincide con un valor imputado; "
+                         "revisar DEC-013 y DEC-022 antes de continuar.")
+    precios = precios.mask(bandera_invalido)
+    rend_simples, rend_log, abarca_invalido = rendimientos_saltando_invalidos(
+        precios, bandera_invalido)
 
     retorno_depende = (bandera.shift(1).fillna(False) | bandera)
     retorno_depende.index.name = "Date"
 
     dataset = _construir_dataset_imputado(datos_dict, precios, bandera,
-                                          rend_simples, rend_log, retorno_depende)
+                                          rend_simples, rend_log, retorno_depende,
+                                          bandera_invalido, abarca_invalido)
     reporte = pd.DataFrame(registros_imputacion)
 
     return {
@@ -347,13 +362,16 @@ def procesar_con_imputacion(datos_dict, columna=PRECIO_RENDIMIENTOS):
         "rend_simples": rend_simples,
         "rend_log": rend_log,
         "retorno_depende": retorno_depende,
+        "bandera_invalido": bandera_invalido,
+        "retorno_abarca_invalido": abarca_invalido,
         "dataset": dataset,
         "reporte_imputaciones": reporte,
     }
 
 
 def _construir_dataset_imputado(datos_dict, precios, bandera, rend_simples,
-                                rend_log, retorno_depende):
+                                rend_log, retorno_depende, bandera_invalido,
+                                abarca_invalido):
     """Construye el dataset largo (tidy) con banderas de imputación."""
     registros = []
     for nombre, elemento in datos_dict.items():
@@ -374,6 +392,8 @@ def _construir_dataset_imputado(datos_dict, precios, bandera, rend_simples,
                 if nombre in rend_log.columns else None,
                 "retorno_depende_imputacion": bool(retorno_depende.loc[fecha, nombre])
                 if nombre in retorno_depende.columns else False,
+                "es_dato_invalido_fuente": bool(bandera_invalido.loc[fecha, nombre]),
+                "retorno_abarca_dato_invalido": bool(abarca_invalido.loc[fecha, nombre]),
             }
             if "Close" in df.columns:
                 registro["precio_original"] = df.loc[fecha, "Close"]
@@ -417,6 +437,11 @@ def guardar_conjunto_procesado(conjunto, ruta=RUTA_DATOS_PROCESADOS):
         conjunto["retorno_depende"].to_csv(ruta / ARCHIVO_RETORNO_DEPENDE, index=True,
                                            encoding="utf-8")
         guardados.append(str(ruta / ARCHIVO_RETORNO_DEPENDE))
+
+    if conjunto["bandera_invalido"] is not None and not conjunto["bandera_invalido"].empty:
+        conjunto["bandera_invalido"].to_csv(ruta / ARCHIVO_BANDERA_INVALIDO,
+                                            index=True, encoding="utf-8")
+        guardados.append(str(ruta / ARCHIVO_BANDERA_INVALIDO))
 
     if conjunto["dataset"] is not None and not conjunto["dataset"].empty:
         conjunto["dataset"].to_csv(ruta / ARCHIVO_DATASET, index=False, encoding="utf-8")
