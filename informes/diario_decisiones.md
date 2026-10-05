@@ -575,4 +575,42 @@ Cada decisión se registra con el siguiente formato:
 
 ---
 
+### DEC-034: BORRADOR del plan de la Fase 15 — evaluación final en el bloque de prueba
+
+- **Fecha:** 2026-10-05
+- **Fase:** Fase 15 — Comparación final
+- **Estado:** **BORRADOR. Requiere aprobación explícita del equipo antes de ejecutar. NO abrir el bloque de prueba hasta entonces.** El bloque de prueba (2025-01-02 a 2026-09-14, 426 días) se abre **una sola vez**: después no se puede cambiar el plan sin invalidar la evaluación. Los puntos marcados con **[DECIDIR]** necesitan respuesta del equipo.
+
+**1. Principios**
+- Todo lo que se evalúa, cómo y con qué prueba queda fijado aquí antes de abrir la prueba; los resultados se reportan completos, favorables o no.
+- Un único módulo, `src/evaluacion_final.py`, abre la prueba (`confirmar_evaluacion_final=True`); el test `test_ningun_modulo_de_src_abre_el_bloque_de_prueba` ya lo exige.
+- **Ensayo previo obligatorio:** antes de abrir la prueba, `evaluacion_final.py` se ejecuta en modo ensayo usando validación (2024) como si fuera la prueba y entrenamiento como historia, y debe reproducir los resultados de las Fases 7–14. Solo si el ensayo reproduce, se ejecuta una vez sobre la prueba.
+- Tras la ejecución sobre la prueba se commitean de inmediato el código, los resultados y sus huellas SHA-256. Solo se permite reejecutar para corregir un error de programación documentado en el diario (no para cambiar decisiones).
+
+**2. Datos del bloque de prueba**
+- Mismo preprocesamiento: imputación de Kalman ya aplicada (Grupo Bolívar, 2026-03-10, DEC-012/013) y precios inválidos de la fuente (DEC-022).
+- **[DECIDIR] Regla para fechas sospechosas de 2025** (pendiente de DEC-022). DEC-018 ya vio dos fechas (2025-02-19 y 2025-09-30), por lo que la regla no puede ajustarse a ellas. Propuesta: aplicar mecánicamente el detector usado en entrenamiento y validación (días con **2 o más acciones** con salto ≥ 5 % revertido al día siguiente); los días detectados se tratan como DEC-022 (NaN y rendimiento de dos días) en el **análisis principal**, y se reporta un **análisis de sensibilidad sin tratamiento**. Alternativa: no tratar nada y reportar la sensibilidad con el tratamiento.
+
+**3. Estimación de los modelos para la prueba**
+- **[DECIDIR] Opción A (propuesta):** se reestima cada modelo con **entrenamiento + validación (2020–2024)** usando **el mismo procedimiento de selección ya congelado** (BIC para ARIMA; las mismas rejillas y validación cruzada temporal para RF y GB; parada temprana con el último 20 % para MLP y LSTM; mismas semillas). Los pronósticos sobre la prueba son a un paso con parámetros fijos. Opción B: usar los modelos estimados solo con entrenamiento, tal cual se evaluaron en validación.
+- El universo líquido sigue siendo el fijado con entrenamiento (Celsia, Banco de Bogotá, Ecopetrol, Davivienda PF).
+
+**4. Pruebas confirmatorias (cada familia con Holm al 5 %)**
+- **H15-1 Rendimiento diario:** cero, ARIMA, RF, GB, MLP y LSTM frente a la media (Diebold-Mariano sobre la pérdida cuadrática promediada por fecha, 6 pruebas) y MCS al 10 %. Predicción registrada: ningún modelo supera a la media.
+- **H15-2 Volatilidad diaria (4 líquidas):** GARCH frente a EWMA y a la varianza constante (QLIKE; 2 pruebas) y MCS. Predicción: EWMA en el MCS.
+- **H15-3 Volatilidad semanal:** RF, GB y MLP frente a HAR (QLIKE; 3 pruebas) y MCS.
+- **H15-4 Riesgo (VaR y ES 95 % y 99 %, 4 métodos, 4 líquidas y 6 portafolios de la Fase 6):** Kupiec y Christoffersen (cobertura condicional, Holm sobre todas las combinaciones), prueba de ES (Holm), semáforo de Basilea y MCS de la pérdida cuantílica.
+- **H15-5 Portafolios (walk-forward):** se continúa el backtesting de DEC-032 sin cambios (mensual, ventana móvil de 252 días, 20 pb con sensibilidad 0 y 50, mismas estrategias y universos) entre enero de 2025 y el 2026-09-14. Diferencia de Sharpe neto de cada estrategia de riesgo frente al 1/N con bootstrap por bloques (8 pruebas). Referencia adicional: IBR.
+
+**5. Lo que se reporta**
+- Todas las tablas de la Fase 15 junto a las de validación, para mostrar si los resultados se sostienen fuera de muestra.
+- Tamaños de efecto con intervalos de confianza, no solo p-valores.
+- Limitaciones: un solo periodo de prueba (≈ 20 meses), fuente de datos (Yahoo Finance), universo de 9 acciones y liquidez.
+
+**6. Fuera de alcance**
+- Nuevos modelos, variables o estrategias (cualquier análisis adicional después de abrir la prueba se rotula como **exploratorio**).
+- Cambiar hiperparámetros, ventanas, costos o restricciones a la vista de los resultados de la prueba.
+
+---
+
 *Las decisiones siguientes se registrarán conforme avance el proyecto.*
