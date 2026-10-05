@@ -1,6 +1,6 @@
 # Portafolio Colombiano — Proyecto de Econometría
 
-> **Estado del proyecto:** En desarrollo — Fases 0 a 11 implementadas; siguiente: Fase 12 (Optimización del portafolio)
+> **Estado del proyecto:** En desarrollo — Fases 0 a 13 implementadas; siguiente: Fase 14 (Backtesting)
 > **Última actualización:** Octubre 2026
 
 ---
@@ -75,7 +75,8 @@ código y en `informes/diario_decisiones.md`):
 │   ├── neural_networks/   # MLP y LSTM en PyTorch (Fase 9)
 │   ├── comparacion/       # MCS, Holm, R² fuera de muestra, Pesaran-Timmermann (Fase 10)
 │   ├── riesgo/            # VaR, Expected Shortfall y backtesting (Fase 11)
-│   └── volatilidad_semanal/  # Volatilidad y rendimiento semanales (DEC-029/030)
+│   ├── volatilidad_semanal/  # Volatilidad y rendimiento semanales (DEC-029/030)
+│   └── optimizacion/      # Optimización con restricciones y sectores (Fases 12–13)
 ├── modelos/           # Modelos entrenados (fases posteriores)
 ├── resultados/        # Métricas, reportes y gráficos
 │   └── graficos/      # Gráficos del análisis exploratorio
@@ -94,7 +95,7 @@ Estudiantes de Estadística — Semestre VIII.
 Fases implementadas (las decisiones marcadas como pendientes requieren aprobación del equipo):
 
 1. **Fases 0 y 1 — Problema y selección de empresas:** estructura del proyecto, documentación inicial y universo de 9 empresas (DEC-006), con tickers auditados (DEC-010).
-2. **Fase 2 — Base de datos:** descarga desde Yahoo Finance, datos crudos inmutables, metadatos y reporte de calidad. La muestra está fija: del 2020-01-01 al 2026-09-14 (DEC-021). Variables externas: TRM y petróleo Brent (DEC-024). **Pendiente:** índice de mercado (COLCAP, no disponible en Yahoo), tasa de interés e inflación.
+2. **Fase 2 — Base de datos:** descarga desde Yahoo Finance, datos crudos inmutables, metadatos y reporte de calidad. La muestra está fija: del 2020-01-01 al 2026-09-14 (DEC-021). Variables externas: TRM y petróleo Brent (DEC-024) e IBR overnight del Banco de la República como tasa libre de riesgo (DEC-031). **Pendiente:** índice de mercado (COLCAP, no disponible en Yahoo), tasa de interés e inflación.
 3. **Fase 3 — Limpieza:** auditoría de calidad y liquidez, **imputación del único valor faltante con Filtro de Kalman** (con bandera y validación MAE/RMSE) y precio inválido de la fuente del 2024-05-03 marcado con bandera, sin imputar (DEC-022).
 4. **Fase 4 — Análisis exploratorio:** rendimientos, estadística descriptiva, volatilidad, correlaciones, outliers, auditoría de iliquidez, saltos reversibles y pruebas formales (Jarque-Bera, ADF/KPSS, Ljung-Box, ARCH-LM) sobre entrenamiento. El hallazgo DEC-018 se resolvió en DEC-022: el precio de Yahoo del 2024-05-03 es un error de la fuente en las 9 empresas (contrastado con el ADR de Ecopetrol) y queda marcado como inválido en la capa procesada.
 5. **Fase 5 — Entrenamiento / validación / prueba:** partición cronológica en `datos/particiones/` (entrenamiento hasta 2023, validación 2024, prueba desde 2025), verificación anti-leakage, huellas SHA-256 y acceso controlado a la prueba (DEC-017, DEC-019, pendientes de aprobación).
@@ -105,6 +106,7 @@ Fases implementadas (las decisiones marcadas como pendientes requieren aprobaci�
 10. **Fase 10 — Comparación de modelos:** consolida los pronósticos de validación de las Fases 7 a 9 con Model Confidence Set, R² fuera de muestra con intervalos bootstrap, Diebold-Mariano, Pesaran-Timmermann y corrección de Holm por comparaciones múltiples (DEC-027). Código en `src/comparacion/`; se ejecuta con `python -m src.comparacion.fase10` (requiere las Fases 7 a 9). Hallazgos: para el rendimiento diario ningún modelo se distingue de la media (los 7 quedan en el MCS); para la volatilidad, EWMA es el único en el MCS.
 11. **Fase 11 — Estimación del riesgo:** VaR y Expected Shortfall a un día (95 % y 99 %) de las 4 acciones líquidas y los 6 portafolios de la Fase 6 por simulación histórica, normal con EWMA, GARCH-t y simulación histórica filtrada, validados con Kupiec, Christoffersen, semáforo de Basilea, prueba de ES y MCS (DEC-028). Código en `src/riesgo/`; se ejecuta con `python -m src.riesgo.fase11`. Hallazgos: ningún método se rechaza tras Holm; el VaR normal subestima la cola al 99 %, GARCH-t la sobreestima y la simulación histórica filtrada es la mejor calibrada.
 12. **Extensión — volatilidad semanal (plan registrado antes de ejecutar, DEC-029/DEC-030):** varianza realizada de la semana siguiente de las 4 acciones líquidas con EWMA, GARCH, HAR, Random Forest, Gradient Boosting y MLP. Código en `src/volatilidad_semanal/`; se ejecuta con `python -m src.volatilidad_semanal.ejecutar`. Hallazgos: los modelos de ML quedan numéricamente por delante de HAR pero sin significancia (Holm p = 0,40; los 6 en el MCS); el rendimiento semanal tampoco es predecible.
+13. **Fases 12–13 — Optimización con restricciones:** 1/N, mínima varianza (muestral y Ledoit-Wolf), mínimo CVaR 95 %, paridad de riesgo, máximo Sharpe y máximo retorno con volatilidad acotada, con máximo 30 % por acción y 40 % por sector, y el IBR como tasa libre de riesgo (DEC-031). Código en `src/optimizacion/`; se ejecuta con `python -m src.optimizacion.fase12`. Hallazgos: con 9 empresas los portafolios basados en riesgo superan al 1/N y el máximo Sharpe es el peor en validación; con las 4 líquidas ningún portafolio supera al IBR en 2024.
 
 Empresas incluidas (tickers de Yahoo Finance):
 

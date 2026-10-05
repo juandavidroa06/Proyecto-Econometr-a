@@ -38,11 +38,24 @@ def test_var_no_usa_informacion_futura(serie, metodo):
     assert otro["var"].iloc[101] != base["var"].iloc[101]
 
 
-def test_historica_es_el_cuantil_de_la_ventana(serie):
+def test_historica_usa_las_k_peores_de_la_ventana(serie):
     tr, va = serie
     m = medidas.historica(tr, va, 0.05, ventana=250)
-    esperado = -np.quantile(tr.to_numpy()[-250:], 0.05)
-    assert m["var"].iloc[0] == pytest.approx(esperado)
+    peores = np.sort(tr.to_numpy()[-250:])[:13]          # k = ceil(0.05 * 250)
+    assert m["var"].iloc[0] == pytest.approx(-peores[-1])
+    assert m["es"].iloc[0] == pytest.approx(-peores.mean())
+
+
+def test_cola_empirica_no_depende_de_empates():
+    # 20 observaciones: k = ceil(0.05 * 20) = 1; muchos empates en -0.02.
+    x = np.array([-0.05] + [-0.02] * 5 + [0.01] * 14)
+    var, es = medidas.cola_empirica(x, 0.05)
+    assert var == pytest.approx(0.05) and es == pytest.approx(0.05)
+    var10, es10 = medidas.cola_empirica(x, 0.10)          # k = 2
+    assert var10 == pytest.approx(0.02) and es10 == pytest.approx(0.035)
+    # Perturbaciones de 1e-15 no cambian el resultado (antes sí, por "x <= q").
+    y = x + np.random.default_rng(0).normal(0, 1e-15, len(x))
+    assert medidas.cola_empirica(y, 0.10)[1] == pytest.approx(es10, abs=1e-12)
 
 
 def test_t_estandarizada_coincide_con_simulacion():

@@ -37,11 +37,19 @@ def _validar(train, validacion):
         raise ValueError("Leakage: validación debe empezar después de train.")
 
 
-def _cola_empirica(muestra, alfa):
-    """(VaR, ES) de una muestra de rendimientos (o residuos)."""
-    q = np.quantile(muestra, alfa)
-    cola = muestra[muestra <= q]
-    return -q, -cola.mean()
+def cola_empirica(muestra, alfa):
+    """(VaR, ES) empíricos de una muestra de rendimientos (o residuos).
+
+    Se usan las k = ceil(alfa * n) peores observaciones: VaR = -x_(k) y
+    ES = -media(x_(1), ..., x_(k)). A diferencia de "x <= cuantil", esta
+    definición no depende de los empates, que son frecuentes porque los
+    precios de la BVC se mueven en saltos discretos (DEC-031).
+    """
+    x = np.sort(np.asarray(muestra, float))
+    if len(x) == 0 or np.isnan(x).any():
+        raise ValueError("Muestra vacía o con faltantes.")
+    k = max(int(np.ceil(alfa * len(x))), 1)
+    return -x[k - 1], -x[:k].mean()
 
 
 def historica(train, validacion, alfa, ventana=250):
@@ -54,7 +62,7 @@ def historica(train, validacion, alfa, ventana=250):
     var, es = [], []
     for i in range(len(validacion)):
         fin = n_tr + i                              # excluye el día pronosticado
-        v, e = _cola_empirica(completa[fin - ventana:fin], alfa)
+        v, e = cola_empirica(completa[fin - ventana:fin], alfa)
         var.append(v)
         es.append(e)
     return pd.DataFrame({"var": var, "es": es}, index=validacion.index)
@@ -107,7 +115,7 @@ def fhs(train, validacion, alfa, lam=0.94):
     _validar(train, validacion)
     sigma_tr, sigma = _sigma_ewma(train, validacion, lam)
     z = (train / sigma_tr).to_numpy()
-    var_z, es_z = _cola_empirica(z, alfa)
+    var_z, es_z = cola_empirica(z, alfa)
     return pd.DataFrame({"var": var_z * sigma, "es": es_z * sigma},
                         index=validacion.index)
 

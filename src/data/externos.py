@@ -23,6 +23,8 @@ import pandas as pd
 
 from config.environment import RUTA_CRUDOS_EXTERNOS, RUTA_METADATA_EXTERNOS
 from config.settings import (
+    ARCHIVO_IBR,
+    COLUMNA_IBR,
     FECHA_FIN,
     FECHA_INICIO,
     FRECUENCIA,
@@ -77,6 +79,37 @@ def cargar_externos(tickers=TICKERS_EXTERNOS, ruta=RUTA_CRUDOS_EXTERNOS,
     if (ancho <= 0).any().any():
         raise ValueError("Hay precios externos no positivos.")
     return ancho
+
+
+def cargar_ibr(ruta=RUTA_CRUDOS_EXTERNOS / ARCHIVO_IBR):
+    """IBR overnight nominal (% anual) del Banco de la República (DEC-031).
+
+    Lee el CSV descargado manualmente SIN modificarlo y lo recorta al
+    horizonte de la muestra [FECHA_INICIO, FECHA_FIN). Lanza error si el
+    archivo falta, si la columna no existe o si hay fechas inválidas,
+    duplicadas o valores fuera de rango.
+    """
+    if not ruta.exists():
+        raise FileNotFoundError(f"Falta {ruta}: descargar el IBR del Banco de la República.")
+    crudo = pd.read_csv(ruta, encoding="utf-8-sig")
+    if COLUMNA_IBR not in crudo.columns:
+        raise ValueError(f"No se encontró la columna {COLUMNA_IBR!r} en {ruta.name}.")
+    fechas = pd.to_datetime(crudo.iloc[:, 0], format="%Y/%m/%d", errors="raise")
+    serie = pd.Series(crudo[COLUMNA_IBR].to_numpy(float), index=fechas, name="IBR_overnight_nominal")
+    if serie.index.has_duplicates or not serie.index.is_monotonic_increasing:
+        raise ValueError("El IBR tiene fechas duplicadas o desordenadas.")
+    serie = serie[(serie.index >= pd.Timestamp(FECHA_INICIO)) & (serie.index < pd.Timestamp(FECHA_FIN))]
+    if serie.isna().any() or not serie.between(0, 50).all():
+        raise ValueError("IBR con faltantes o fuera de [0, 50] % en la muestra.")
+    out = serie.to_frame()
+    out.index.name = "Date"
+    return out
+
+
+def ibr_efectiva_anual(ibr_nominal_pct):
+    """Convierte el IBR overnight nominal (% anual, base 360) a tasa efectiva
+    anual en proporción: (1 + r/360)^365 - 1."""
+    return (1 + ibr_nominal_pct / 100 / 360) ** 365 - 1
 
 
 if __name__ == "__main__":

@@ -343,14 +343,15 @@ def etapa_fase5(conjunto):
         huella,
     )
 
-    from src.data.externos import cargar_externos
+    from src.data.externos import cargar_externos, cargar_ibr
 
     # DEC-024: volumen y variables externas también se parten y se protegen
     # con huellas, para que la Fase 8 no lea el periodo de prueba.
     series = {"rendimientos_log": conjunto["rend_log"],
               "precios": conjunto["precios"],
               "volumen": conjunto["volumen"],
-              "externos": cargar_externos()}
+              "externos": cargar_externos(),
+              "tasas": cargar_ibr()}  # DEC-031: IBR overnight nominal
     huellas = {}
     particiones = {}
     for nombre_base, df in series.items():

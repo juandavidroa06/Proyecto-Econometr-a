@@ -8,6 +8,9 @@
   "rendimientos_log_test": "43b97ede5f51c52e8e4f626f2e5140b1274b3d6f15e6cf0119a84360b75c45da",
   "rendimientos_log_train": "87974447b4f7895c29e7cf14a9c976677f715dc2db8dfcacbb2a3ea6fa1b9f9f",
   "rendimientos_log_validacion": "094eae73631b4fed93b24ac5139029288270a0aed64f7f3fb6dfbdf5b57bb7eb",
+  "tasas_test": "1bab91b142be6abc3ba2a252b2f5147fe094409fdec911e3b40a0234173abe71",
+  "tasas_train": "61a90a0d222dd331f5092ce5e57070d525f2d4092d8f3a47068d3cc5d2161d6f",
+  "tasas_validacion": "4bb8821276e22b9d15ec5a6d13b6c6343199cbb729defbd8c19e018783d977a8",
   "volumen_test": "95a1efe440d10ffbbd657823f7658d7aa4c65f53096d2cbc7243ad17e5c38d13",
   "volumen_train": "194c4354dc2638490bf4f63bb2a7dbee1e428b40fdd066269e59d3f9198a189d",
   "volumen_validacion": "cc3eb3ce5fc3b69cf5bfb3d11e8cc2065cfa89dfbaba03f8303120b6f02015f4"

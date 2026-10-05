@@ -61,6 +61,12 @@ TICKERS_EXTERNOS = {
     "Brent": "BZ=F",      # futuro de petróleo Brent (USD por barril)
 }
 
+# DEC-031: tasa libre de riesgo = IBR overnight NOMINAL (Banco de la
+# República, Portal de Estadísticas Económicas), descargado manualmente el
+# 2026-10-05 y guardado sin modificar en datos/crudos/externos/.
+ARCHIVO_IBR = "Tasas de interés.csv"
+COLUMNA_IBR = "Indicador Bancario de Referencia (IBR) overnight, nominal"
+
 # Frecuencia / intervalo de las series de tiempo (Yahoo Finance).
 # "1d" = diario, "1wk" = semanal, "1mo" = mensual.
 FRECUENCIA = "1d"
@@ -144,6 +150,23 @@ PESO_MAXIMO_ACTIVO = 0.30
 # pendientes). 0.0 es un supuesto provisional que FAVORECE el Sharpe de todos
 # los portafolios por igual; sustituir por una tasa real antes del informe.
 TASA_LIBRE_RIESGO_ANUAL = 0.0
+
+# Sectores (DEC-031) y límite de exposición por sector (Fase 13 del borrador).
+SECTORES = {
+    "Banco de Bogota": "financiero",
+    "Banco Davivienda PF": "financiero",
+    "Grupo Bolivar": "financiero",
+    "Ecopetrol": "petroleo_gas",
+    "Celsia": "servicios_publicos",
+    "Promigas": "servicios_publicos",
+    "ETB": "telecomunicaciones",
+    "Nutresa": "consumo",
+    "Mineros SA": "mineria",
+}
+LIMITE_SECTOR = 0.40
+
+# Nivel del CVaR para el portafolio de mínimo CVaR (Fase 12).
+NIVEL_CVAR_OPTIMIZACION = 0.95
 
 # =============================================================================
 # CONFIGURACIÓN DE ECONOMETRÍA (Fase 7 — ARIMA y GARCH, DEC-023)

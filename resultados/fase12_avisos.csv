@@ -1,0 +1,4 @@
+universo,variante,aviso
+liquidas,sin_sectores,Máximo Sharpe degenerado: el mejor Sharpe de entrenamiento es -0.302 <= 0 (ningún portafolio supera al IBR).
+liquidas,con_sectores,1/N infactible con el límite sectorial: se usa el factible más cercano.
+liquidas,con_sectores,Máximo Sharpe degenerado: el mejor Sharpe de entrenamiento es -0.302 <= 0 (ningún portafolio supera al IBR).

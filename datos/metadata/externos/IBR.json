@@ -1,0 +1,13 @@
+{
+    "serie": "Indicador Bancario de Referencia (IBR), overnight, 1, 3, 6 y 12 meses, nominal",
+    "fuente": "Banco de la República — Portal de Estadísticas Económicas (suameca.banrep.gov.co)",
+    "obtencion": "Descarga manual en CSV por un miembro del equipo; archivo guardado sin modificar",
+    "archivo": "Tasas de interés.csv",
+    "fecha_archivo": "2026-10-05T12:49:45",
+    "sha256": "c2ddf6bcc821e163744d0bc0ddc13875346121bf01a012163311bfd8964011db",
+    "rango_fechas_archivo": [
+        "2008-01-02",
+        "2026-10-05"
+    ],
+    "uso": "Tasa libre de riesgo (DEC-031): IBR overnight nominal recortado a [FECHA_INICIO, FECHA_FIN)"
+}
