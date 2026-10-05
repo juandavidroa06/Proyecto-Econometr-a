@@ -552,7 +552,26 @@ Cada decisión se registra con el siguiente formato:
 - **Métricas:** rendimiento anual, volatilidad, Sharpe sobre el IBR diario (efectivo), máxima caída, CVaR 95 % diario realizado (definición robusta de DEC-031), rotación mensual media, costo total y valor final de 1 peso invertido.
 - **Hipótesis principal H1:** alguna estrategia basada en riesgo tiene mayor Sharpe neto (20 pb) que el 1/N en enero 2021–diciembre 2024. Prueba: diferencia de Sharpe frente al 1/N con **bootstrap por bloques** (bloques de 21 días, 2 000 réplicas, semilla 42), p-valor bilateral; **Holm sobre las 8 pruebas** (4 estrategias × 2 universos); nivel 5 %.
 - **Lo que no se hará:** cambiar ventana, frecuencia, costos, estrategias, restricciones o la prueba después de ver resultados; abrir el bloque de prueba.
-- **Estado:** Plan registrado; resultados en DEC-033.
+- **Estado:** Plan registrado; ejecutado sin cambios. Resultados en DEC-033.
+
+---
+
+### DEC-033: Resultados del plan DEC-032 — backtesting walk-forward 2021–2024
+
+- **Fecha:** 2026-10-05
+- **Fase:** Fase 14 — Backtesting
+- **Ejecución:** se siguió el plan DEC-032 sin cambios (plan commiteado antes del código y de los resultados). Detalles de implementación: el IBR de cada día es el último publicado hasta ese día; el Sharpe de la referencia IBR no está definido (exceso idénticamente cero) y se reporta como NaN. 1 036 días simulados (enero 2021–diciembre 2024), 48 rebalanceos mensuales.
+- **Resultados (rebalanceo mensual, 20 pb, enero 2021–diciembre 2024):**
+  - **Ninguna estrategia supera al IBR.** Valor final de 1 peso: IBR 1,386 (8,3 % anual); mejor estrategia, 1/N con 9 empresas, 1,145 (3,3 % anual). 2021–2023 fue negativo para la renta variable colombiana (1/N: −4,0 % anual; máxima caída −36 %) y 2024 fue positivo con 9 empresas (+30 %).
+  - **H1 NO se confirma:** ninguna estrategia de riesgo tiene mayor Sharpe que el 1/N. Todas las diferencias son **negativas**: 9 empresas, de −0,05 (paridad de riesgo) a −0,39 (mínimo CVaR); 4 líquidas, de −0,08 a −0,14. Tres estrategias del universo líquido son peores que el 1/N con p ≈ 0,02 sin corregir, pero **ninguna diferencia es significativa tras Holm** (p ≥ 0,16).
+  - Sharpe total sobre el IBR: 9 empresas: 1/N −0,24, paridad de riesgo −0,28, mínima varianza Ledoit-Wolf −0,36, mínima varianza muestral −0,62, mínimo CVaR −0,62; 4 líquidas: entre −0,52 (1/N) y −0,66.
+  - **Los costos no explican el resultado:** con 0 pb el orden es el mismo (el 1/N sigue primero); el costo acumulado va de 0,7 % (1/N) a 3,0 % (mínimo CVaR, rotación mensual media 29 %) con 20 pb. Con rebalanceo trimestral las conclusiones no cambian.
+  - En 2024, con estimación móvil, la ventaja estática de la mínima varianza de la Fase 12 desaparece: Sharpe 2024 de 9 empresas: paridad de riesgo 1,38, mínima varianza Ledoit-Wolf 1,33, 1/N 1,32, mínima varianza muestral 1,20, mínimo CVaR 0,54. Lo de DEC-031 dependía de pesos fijos estimados con 2020–2023.
+  - Ledoit-Wolf mejora sistemáticamente a la covarianza muestral (menos rotación y mejor Sharpe), coherente con el menor error de estimación.
+- **Interpretación:** el resultado es coherente con la evidencia de que al 1/N le cuesta mucho ganarle fuera de muestra cuando el error de estimación es grande (pocas observaciones por parámetro, ventanas de un año, acciones ilíquidas). En este periodo, además, la renta variable colombiana rindió menos que la tasa libre de riesgo.
+- **Implicaciones:** (1) para la Fase 15 (evaluación final en el bloque de prueba), el plan debe fijar de antemano estas mismas estrategias, con el 1/N y el IBR como referencias; (2) la Fase 16 (robustez) debería variar la ventana de estimación (p. ej. 504 días) y el universo, registrando el plan antes.
+- **Evidencia utilizada:** `resultados/fase14_metricas.csv` (por periodo, frecuencia y costo), `fase14_pruebas.csv`, `fase14_rotacion.csv`, `fase14_pesos.csv` (pesos de cada rebalanceo), `fase14_riqueza.csv`, `resultados/graficos/fase14_riqueza.png`; código en `src/backtesting/` (`motor.py`, `fase14.py`); 10 tests en `tests/test_backtesting_fase14.py` (fechas de rebalanceo, comprar y mantener contra cálculo directo, rotación y costos calculados a mano, faltantes, pesos sin datos posteriores, ventana insuficiente, diferencia de Sharpe, IBR publicado, Sharpe indefinido). Dos ejecuciones idénticas.
+- **Estado:** Pendiente de aprobación del equipo.
 
 ---
 
