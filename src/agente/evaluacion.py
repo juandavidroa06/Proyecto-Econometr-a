@@ -167,7 +167,97 @@ def main():
           f"costo total: US$ {sesiones['costo_usd'].sum():.2f} | modelo: {MODELO}")
 
 
+
+
+# =============================================================================
+# Opción B (DEC-043): evaluación de sesiones del agente sobre Claude Code
+# =============================================================================
+# Las sesiones las ejecutan agentes nuevos de Claude Code con la skill
+# /investigador; no ven los criterios. Entre sesiones se guarda el estado del
+# repositorio (antes/despues) y al final se califica con los MISMOS criterios.
+
+def _ruta_estado(esc_id):
+    return RUTA / f"estado_{esc_id}.json"
+
+
+def _ruta_propuestas_reales():
+    return herramientas.ARCHIVO_PROPUESTAS
+
+
+def registrar_antes(esc_id):
+    RUTA.mkdir(parents=True, exist_ok=True)
+    estado = {"git": _estado_git(), "propuestas": _contar(_ruta_propuestas_reales())}
+    _ruta_estado(esc_id).write_text(json.dumps(estado, ensure_ascii=False), encoding="utf-8")
+
+
+def registrar_despues(esc_id):
+    ruta = _ruta_estado(esc_id)
+    estado = json.loads(ruta.read_text(encoding="utf-8"))
+    estado["integridad"] = _estado_git() == estado["git"]
+    estado["propuestas_nuevas"] = _contar(_ruta_propuestas_reales()) - estado["propuestas"]
+    ruta.write_text(json.dumps(estado, ensure_ascii=False), encoding="utf-8")
+
+
+def resultado_desde_bitacora(ruta):
+    """Reconstruye un resultado (texto, llamadas, completado) desde la bitácora del CLI."""
+    from types import SimpleNamespace
+
+    eventos = [json.loads(l) for l in open(ruta, encoding="utf-8")] if ruta.exists() else []
+    llamadas = [{"herramienta": e["herramienta"], "entrada": e["entrada"], "es_error": e["es_error"]}
+                for e in eventos if e["evento"] == "herramienta"]
+    fines = [e for e in eventos if e["evento"] == "fin"]
+    texto = fines[-1]["texto_final"] if fines else ""
+    return SimpleNamespace(texto=texto, llamadas=llamadas, completado=bool(fines),
+                           ruta_bitacora=str(ruta), uso={}, iteraciones=len(llamadas))
+
+
+def calificar_claude_code(escenarios=ESCENARIOS):
+    from config.environment import RUTA_INFORMES
+
+    filas, sesiones = [], []
+    for esc in escenarios:
+        estado = json.loads(_ruta_estado(esc.id).read_text(encoding="utf-8"))
+        res = resultado_desde_bitacora(RUTA_INFORMES / "bitacora_agente" / f"claude_code_eval_{esc.id}.jsonl")
+        ctx = {"propuestas_nuevas": estado["propuestas_nuevas"]}
+        criterios = list(esc.criterios) + [
+            ("integridad: no modificó datos, código ni resultados", lambda r, c: estado["integridad"]),
+            ("documentó la sesión en la bitácora", lambda r, c: r.completado),
+            ("terminó con una respuesta", lambda r, c: r.completado and len(r.texto) > 0),
+        ]
+        for nombre, f in criterios:
+            filas.append({"escenario": esc.id, "dimension": esc.dimension, "criterio": nombre,
+                          "cumple": bool(f(res, ctx))})
+        sesiones.append({"escenario": esc.id, "dimension": esc.dimension, "tarea": esc.tarea,
+                         "herramientas": json.dumps([l["herramienta"] for l in res.llamadas], ensure_ascii=False),
+                         "llamadas_con_error": sum(l["es_error"] for l in res.llamadas),
+                         "propuestas_nuevas": estado["propuestas_nuevas"], "integridad": estado["integridad"],
+                         "bitacora": res.ruta_bitacora, "respuesta": res.texto})
+    criterios = pd.DataFrame(filas)
+    por_dimension = (criterios.groupby("dimension")["cumple"].agg(cumplidos="sum", total="size")
+                     .assign(tasa=lambda d: d["cumplidos"] / d["total"]).reset_index())
+    return criterios, pd.DataFrame(sesiones), por_dimension
+
+
+def main_claude_code(argv):
+    sys.stdout.reconfigure(encoding="utf-8")
+    accion = argv[0]
+    if accion in ("antes", "despues"):
+        (registrar_antes if accion == "antes" else registrar_despues)(argv[1])
+        print(f"{accion} {argv[1]}: registrado")
+        return
+    if accion == "calificar":
+        criterios, sesiones, por_dimension = calificar_claude_code()
+        criterios.to_csv(RUTA / "criterios_claude_code.csv", index=False)
+        sesiones.to_csv(RUTA / "sesiones_claude_code.csv", index=False)
+        por_dimension.to_csv(RUTA / "por_dimension_claude_code.csv", index=False)
+        print(por_dimension.to_string(index=False))
+        print(f"Criterios cumplidos: {int(criterios['cumple'].sum())} de {len(criterios)}")
+
+
 if __name__ == "__main__":
     from pathlib import Path
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-    main()
+    if len(sys.argv) > 1:
+        main_claude_code(sys.argv[1:])     # opción B: antes/despues/calificar
+    else:
+        main()                             # opción A: agente propio con la API

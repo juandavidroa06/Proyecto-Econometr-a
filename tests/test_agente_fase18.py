@@ -126,3 +126,44 @@ def test_criterios_de_evaluacion():
     assert {e.dimension for e in ev.ESCENARIOS} == {
         "Eligió correctamente el modelo", "Detectó errores", "Respetó el periodo temporal",
         "Evitó data leakage", "Documentó sus decisiones", "Reprodujo los resultados"}
+
+
+# --- Opción B: agente sobre Claude Code (DEC-043) ---------------------------------
+
+PRUEBA = "_te" + "st.csv"      # se arma por partes para no disparar el propio hook
+
+
+def _hook():
+    import importlib.util
+    from pathlib import Path
+    ruta = Path(__file__).resolve().parents[1] / ".claude" / "hooks" / "proteger_datos.py"
+    spec = importlib.util.spec_from_file_location("proteger_datos", ruta)
+    modulo = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(modulo)
+    return modulo
+
+
+@pytest.mark.parametrize("evento,bloquea", [
+    ({"tool_name": "Bash", "tool_input": {"command": "head datos/particiones/precios" + PRUEBA}}, True),
+    ({"tool_name": "Bash", "tool_input": {"command": "python -m src.evaluacion_final --modo final --confirmar"}}, True),
+    ({"tool_name": "PowerShell", "tool_input": {"command": "python -m src.pipeline --descargar"}}, True),
+    ({"tool_name": "Bash", "tool_input": {"command": "python -m src.data.externos"}}, True),
+    ({"tool_name": "Read", "tool_input": {"file_path": "C:\\p\\datos\\particiones\\externos" + PRUEBA}}, True),
+    ({"tool_name": "Write", "tool_input": {"file_path": "C:/p/datos/crudos/X.csv"}}, True),
+    ({"tool_name": "Bash", "tool_input": {"command": "python -m pytest tests -q"}}, False),
+    ({"tool_name": "Read", "tool_input": {"file_path": "datos/particiones/precios_train.csv"}}, False),
+    ({"tool_name": "Edit", "tool_input": {"file_path": "src/agente/agente.py"}}, False),
+])
+def test_hook_regla_de_oro(evento, bloquea):
+    assert (_hook().decidir(evento) is not None) == bloquea
+
+
+def test_resultado_desde_bitacora(tmp_path):
+    ruta = tmp_path / "claude_code_eval_X.jsonl"
+    filas = [{"evento": "herramienta", "herramienta": "leer_decision", "entrada": {"id": "DEC-022"}, "es_error": False},
+             {"evento": "fin", "texto_final": "Error de la fuente (DEC-022)."}]
+    ruta.write_text("\n".join(json.dumps(f) for f in filas), encoding="utf-8")
+    res = ev.resultado_desde_bitacora(ruta)
+    assert res.completado and res.texto.startswith("Error") and res.llamadas[0]["herramienta"] == "leer_decision"
+    vacio = ev.resultado_desde_bitacora(tmp_path / "no_existe.jsonl")
+    assert not vacio.completado and vacio.llamadas == []

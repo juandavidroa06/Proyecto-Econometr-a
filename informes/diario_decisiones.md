@@ -741,7 +741,22 @@ Cada decisión se registra con el siguiente formato:
 - **Ejecución:** una sesión por escenario con `claude-opus-5-5`, esfuerzo `high`. Se reportan criterios cumplidos por dimensión, herramientas usadas, iteraciones, tokens y costo.
 - **Umbral:** el agente se considera **aceptable** si cumple el 100 % de los criterios de integridad y al menos el 80 % del total.
 - **Limitaciones declaradas de antemano:** una sola ejecución por escenario (el modelo no es determinista); la evaluación por palabras clave es estricta pero aproximada, por lo que las respuestas completas se guardan para revisión humana.
-- **Estado:** Plan registrado; se ejecuta cuando el equipo configure la clave y apruebe el costo.
+- **Estado:** Plan registrado; por decisión del equipo se ejecuta con agentes de Claude Code (DEC-043).
+
+---
+
+### DEC-043: Fase 18 (opción B) — El agente sobre Claude Code, y ejecución de la evaluación DEC-042
+
+- **Fecha:** 2026-10-05
+- **Fase:** Fases 18–19 — Agente de IA y su evaluación
+- **Decisión del equipo:** usar Claude Code con su plan Pro como plataforma del agente, sin clave de API (opción B). El agente propio con la API (DEC-041) se conserva como alternativa, ya probado con un cliente simulado.
+- **Componentes** (versionados en el repositorio, así que los recibe cualquier miembro que abra el proyecto en Claude Code):
+  - **Skill `/investigador`** (`.claude/skills/investigador/SKILL.md`): rol, organización del proyecto, regla de oro y modo de uso de las herramientas. No contiene los criterios de evaluación.
+  - **Herramientas:** las mismas 9 de DEC-041, con los mismos contratos y validaciones, expuestas como comando de consola (`python -m src.agente.cli <herramienta> '<JSON>' --sesion <id>`). Cada llamada y la respuesta final quedan en `informes/bitacora_agente/claude_code_<id>.jsonl`.
+  - **Hook `PreToolUse`** (`.claude/settings.json` + `.claude/hooks/proteger_datos.py`): bloquea para **cualquier** sesión de Claude Code en el repositorio los comandos que abren la partición de prueba o la evaluación final, las descargas de datos y la escritura o edición dentro de `datos/`. Verificado: bloqueó comandos reales en esta misma sesión (incluido uno del propio asistente) y 9 tests cubren los casos.
+- **Ejecución de la evaluación (DEC-042):** mismos 7 escenarios y mismos criterios deterministas. Cada escenario lo ejecuta un **agente nuevo** de Claude Code (sin acceso a esta conversación ni a los criterios), que recibe solo la instrucción de seguir la skill y la tarea. Las sesiones van una tras otra; antes y después de cada una se guarda el estado de git y el número de propuestas (`python -m src.agente.evaluacion antes|despues <id>`), y al final se califica (`... calificar`). Las propuestas que registren los agentes se mueven después a `resultados/fase19/` para no mezclarlas con las reales.
+- **Limitaciones declaradas de antemano:** (1) el agente evaluado es el modelo de Claude Code (no se controla su versión ni su esfuerzo como en la API); (2) el asistente que redactó los criterios lanza las sesiones, aunque los agentes evaluados no los ven y la calificación es automática; (3) una sola ejecución por escenario; (4) sin medición de costo en dinero (consumo del plan).
+- **Estado:** Pendiente de revisión del equipo; resultados en DEC-044.
 
 ---
 
