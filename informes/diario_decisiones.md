@@ -447,4 +447,30 @@ Cada decisión se registra con el siguiente formato:
 
 ---
 
+### DEC-028: Fase 11 — VaR y Expected Shortfall a un día con backtesting
+
+- **Fecha:** 2026-10-04
+- **Fase:** Fase 11 — Estimación del riesgo
+- **Decisión (diseño):**
+  - **Series:** las 4 acciones líquidas según entrenamiento y los 6 portafolios de la Fase 6 (1/N, mínima varianza y máximo Sharpe en los universos de 9 y de 4 empresas) con sus pesos fijos estimados en entrenamiento. Las 5 ilíquidas no se evalúan por separado (la Fase 7 mostró que sus modelos de volatilidad no son fiables); sí entran en los portafolios de 9 empresas.
+  - **Medidas:** VaR y ES (CVaR) al 95 % y al 99 %, a un día, sobre rendimientos **simples** (pérdida = −R). Media condicional cero (la Fase 10 no encuentra un pronóstico de la media mejor que el cero).
+  - **Métodos** (cada día con datos hasta el anterior): (1) simulación histórica con ventana móvil de 250 días; (2) normal con volatilidad EWMA, λ = 0,94; (3) GARCH(1,1)-t con parámetros estimados en entrenamiento; (4) simulación histórica filtrada (FHS): cuantiles de los residuos R/σ_EWMA de entrenamiento escalados por la σ_EWMA del día.
+  - **Backtesting en validación (2024, ≈ 250 días):** Kupiec (cobertura incondicional), Christoffersen (independencia y cobertura condicional), semáforo de Basilea para el 99 %, prueba del ES (pérdida/ES en los días con exceso, unilateral, con al menos 3 excesos), pérdida cuantílica y MCS entre métodos (promediando las 10 series por fecha). Holm sobre las 80 pruebas de cobertura condicional y sobre las 53 pruebas de ES.
+- **Resultados (hallazgos, no conclusiones definitivas):**
+  - **Ninguna** de las 80 combinaciones serie × método × nivel se rechaza tras Holm (5 con p < 0,05 sin corregir, cerca de las 4 esperadas por azar). Ninguna prueba de ES es significativa tras Holm (3 de 53 sin corregir).
+  - **Patrón por método al 99 %** (sumando las 10 series, 24,9 excesos esperados; la suma es descriptiva porque las series están correlacionadas):
+    - Normal-EWMA: **39 excesos** y pérdida/ES media 1,25 → **subestima la cola** (colas normales demasiado delgadas). Es el único método con zonas amarillas de Basilea (Banco de Bogotá 6 y Ecopetrol 8 excesos).
+    - GARCH-t: 12 excesos y pérdida/ES 0,88 → **conservador**: sobreestima el riesgo.
+    - FHS: 21 excesos y pérdida/ES 0,93; histórica: 22 excesos y 1,17 → los más cercanos a la calibración nominal.
+  - Al 95 % todos los métodos tienen menos excesos de los esperados (83–103 frente a 124): 2024 fue un año de baja volatilidad frente al entrenamiento (que incluye 2020).
+  - **MCS de la pérdida cuantílica:** los 4 métodos quedan en el conjunto a ambos niveles (la simulación histórica tiene la menor pérdida media); con un año de datos la prueba no los distingue.
+  - Portafolio de mínima varianza (4 líquidas), propuesto como benchmark: 2–3 excesos al 99 % con los 4 métodos (zona verde).
+- **Recomendación para las Fases 12–14:** usar **FHS** (filtrado EWMA + residuos empíricos) como medida principal de VaR/ES: combina la adaptación de EWMA, que la Fase 10 identificó como el mejor pronóstico de volatilidad, con colas empíricas, y es el método mejor calibrado aquí. Mantener la simulación histórica como alternativa simple. No usar el VaR normal para el riesgo extremo.
+- **Limitación de potencia:** con ≈ 250 días, al 99 % se esperan 2,5 excesos; las pruebas tienen poca potencia para distinguir métodos. La evaluación en la prueba (2025–2026, Fase 15) y el backtesting walk-forward (Fase 14) ampliarán la muestra.
+- **Alternativas consideradas:** VaR con media del modelo (rechazada por la Fase 10); GARCH con errores normales (rechazada: colas pesadas); prueba de ES de Acerbi-Székely (aplazada: requiere simulación y la muestra de excesos es pequeña); horizonte de 10 días (aplazado: con 250 días hay muy pocas ventanas independientes).
+- **Evidencia utilizada:** `resultados/fase11_backtesting.csv`, `fase11_mcs_metodos.csv`, `fase11_var_es_validacion.csv`, `resultados/graficos/fase11_var_validacion.png`; código en `src/riesgo/` (`medidas.py`, `backtesting.py`, `fase11.py`); 21 tests en `tests/test_riesgo_fase11.py` (VaR/ES sin información futura para los 4 métodos, ES ≥ VaR, cuantil y ES de la t contra simulación, Kupiec, Christoffersen, zonas de Basilea 0/4/5/9/10 excesos). Segunda ejecución: resultados idénticos.
+- **Estado:** Pendiente de aprobación del equipo.
+
+---
+
 *Las decisiones siguientes se registrarán conforme avance el proyecto.*
