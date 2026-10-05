@@ -145,17 +145,30 @@ def referencias_diarias(rend_log, valid, fin_historia=FECHA_FIN_TRAIN):
         va = serie[serie.index > pd.Timestamp(fin_historia)]
         completa = pd.concat([tr, va])
         pos = {d: i for i, d in enumerate(completa.index)}
-        h_ewma = garch.varianza_ewma(tr, va, 0.94)        # h de cada día de validación
+        origenes = [pos[d] for d in g["ultimo_dia"]]
+        inicio = min(origenes)
+        # EWMA a un paso sobre TODA la serie (misma recursión e inicialización
+        # que garch.varianza_ewma): h[t] usa datos hasta t-1. Así funciona
+        # también cuando la semana objetivo empieza con días de la historia
+        # (semana que cruza la frontera; corrección de DEC-035).
+        y = completa.to_numpy() * garch.ESCALA
+        h = np.empty(len(y))
+        h[0] = float((tr * garch.ESCALA).var(ddof=1))
+        for t in range(1, len(y)):
+            h[t] = 0.94 * h[t - 1] + 0.06 * y[t - 1] ** 2
         res = garch.ajustar_garch(tr, va, "t")
         if res.convergence_flag != 0:
             raise RuntimeError(f"GARCH no convergió para {e}.")
-        f = res.forecast(horizon=5, start=len(tr) - 1, reindex=False).variance
-        for idx, fila in g.iterrows():
-            origen = pos[fila["ultimo_dia"]]
+        # Pronósticos con parámetros de la historia desde el primer origen
+        # necesario (antes: start=len(tr)-1, que con un origen anterior
+        # producía un índice negativo y tomaba una fila equivocada).
+        f = res.forecast(horizon=5, start=inicio, reindex=False).variance
+        for (idx, fila), origen in zip(g.iterrows(), origenes):
             n = int(fila["n_dias_objetivo"])
-            dia_siguiente = completa.index[origen + 1]
-            ewma[idx] = h_ewma.loc[dia_siguiente] * n
-            garch_pred[idx] = float(f.iloc[origen - (len(tr) - 1)].iloc[:n].sum())
+            if origen + 1 >= len(completa):
+                raise ValueError(f"No hay día siguiente al origen {completa.index[origen].date()}.")
+            ewma[idx] = h[origen + 1] * n
+            garch_pred[idx] = float(f.iloc[origen - inicio].iloc[:n].sum())
     return ewma, garch_pred
 
 

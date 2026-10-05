@@ -86,3 +86,31 @@ def test_har_recupera_coeficientes_y_smearing():
     # Smearing ~ E[exp(e)] = exp(sigma^2 / 2) con sigma = 0.2.
     assert coefs.loc[0, "smearing"] == pytest.approx(np.exp(0.02), abs=0.02)
     assert (pred > 0).all()
+
+
+def test_referencias_en_semana_que_cruza_la_frontera():
+    """La semana objetivo empieza con días de la historia (fin de historia a
+    mitad de semana): EWMA y GARCH deben usar el origen correcto (DEC-035)."""
+    from src.econometrics import garch
+
+    rng = np.random.default_rng(8)
+    fechas = pd.bdate_range("2022-01-03", periods=700)
+    r = pd.DataFrame({"A": rng.normal(0, 0.01, 700)}, index=fechas)
+    fin_historia = pd.Timestamp("2024-09-03")             # martes
+    origen = pd.Timestamp("2024-08-30")                   # viernes anterior
+    valid = pd.DataFrame({"empresa": ["A"], "ultimo_dia": [origen], "n_dias_objetivo": [5]})
+    ewma, garch_pred = ej.referencias_diarias(r, valid, fin_historia)
+
+    serie = r["A"]
+    y = serie.to_numpy() * 100
+    tr = serie[serie.index <= fin_historia]
+    h = np.empty(len(y))
+    h[0] = float((tr * 100).var(ddof=1))
+    for t in range(1, len(y)):
+        h[t] = 0.94 * h[t - 1] + 0.06 * y[t - 1] ** 2
+    i = serie.index.get_loc(origen)
+    assert ewma.iloc[0] == pytest.approx(h[i + 1] * 5)
+
+    res = garch.ajustar_garch(tr, serie[serie.index > fin_historia], "t")
+    esperado = res.forecast(horizon=5, start=i, reindex=False).variance.iloc[0].sum()
+    assert garch_pred.iloc[0] == pytest.approx(esperado)

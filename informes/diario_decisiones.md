@@ -614,4 +614,16 @@ Cada decisión se registra con el siguiente formato:
 
 ---
 
+### DEC-035: Incidente en la primera ejecución final — error de programación en H15-3 y corrección
+
+- **Fecha:** 2026-10-05
+- **Fase:** Fase 15 — Evaluación final
+- **Qué pasó:** la primera ejecución en modo final (código del commit `0cb111f`) abrió el bloque de prueba, aplicó la regla de DEC-034 y se **interrumpió con un error** (`KeyError: 2024-12-30`) al calcular la familia H15-3 (volatilidad semanal). **No se escribió ningún resultado** de las familias H15-1 a H15-5; el único archivo producido fue la lista de fechas detectadas por la regla, que se conserva en `resultados/fase15/final_intento1_interrumpido/fechas_detectadas.csv`: 2025-02-19 (Banco de Bogotá, Ecopetrol, Mineros, Nutresa), 2025-12-03 (ETB, Mineros) y 2026-03-20 (Banco de Bogotá, Ecopetrol).
+- **Causa (error de programación, no de datos ni de método):** la semana objetivo que termina el 2025-01-03 empieza con dos días de la historia (30 y 31 de diciembre de 2024). `referencias_diarias` buscaba el pronóstico EWMA del 2024-12-30 solo entre las fechas de evaluación. Al revisar se encontró un error peor y silencioso en la misma semana: para el GARCH, los pronósticos empezaban en el último día de la historia y un origen anterior daba un **índice negativo**, que habría tomado una fila equivocada sin avisar. En el ensayo no ocurrió porque el 30 y el 31 de diciembre de 2023 fueron fin de semana.
+- **Corrección:** EWMA y GARCH se calculan sobre toda la serie desde el primer origen necesario, con los parámetros de la historia y la misma recursión; se valida que exista el día siguiente al origen. Test nuevo para una semana que cruza la frontera. Los resultados semanales publicados (DEC-030) no cambian (diferencias ≤ 6e-14).
+- **Procedimiento (según DEC-034):** se documenta el error, se commitea la corrección, se repite el ensayo (debe reproducir) y se ejecuta el modo final una vez más con la misma regla, la misma Opción A y las mismas pruebas. Nada del plan cambia.
+- **Estado:** Registrado antes de repetir la ejecución.
+
+---
+
 *Las decisiones siguientes se registrarán conforme avance el proyecto.*
