@@ -1,0 +1,3 @@
+# Archivo descargado del Banco de la República: se conserva byte a byte
+# (su SHA-256 está en datos/metadata/externos/IBR.json). Sin conversión de saltos de línea.
+datos/crudos/externos/Tasas*.csv -text
