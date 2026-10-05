@@ -1,6 +1,6 @@
 # Portafolio Colombiano — Proyecto de Econometría
 
-> **Estado del proyecto:** En desarrollo — Fases 0 a 16 completadas; siguiente: Fase 17 (Interpretación económica)
+> **Estado del proyecto:** En desarrollo — Fases 0 a 17 completadas; siguiente: Fase 18 (Agente de IA) o Fase 20 (Informe final)
 > **Última actualización:** Octubre 2026
 
 ---
@@ -80,6 +80,7 @@ código y en `informes/diario_decisiones.md`):
 │   ├── backtesting/       # Simulación walk-forward con costos (Fase 14)
 │   ├── informe/           # Gráficos de resultados ya congelados
 │   ├── robustez/          # Análisis de robustez exploratorio (Fase 16)
+│   ├── interpretacion/    # Interpretación económica (Fase 17)
 │   └── evaluacion_final.py  # Fase 15: único módulo que abre el bloque de prueba
 ├── modelos/           # Modelos entrenados (fases posteriores)
 ├── resultados/        # Métricas, reportes y gráficos
@@ -114,6 +115,7 @@ Fases implementadas (las decisiones marcadas como pendientes requieren aprobaci�
 14. **Fase 14 — Backtesting walk-forward (plan registrado, DEC-032/DEC-033):** enero 2021–diciembre 2024, rebalanceo mensual con ventana móvil de 252 días y costos de 20 pb (sensibilidad 0 y 50 pb; robustez trimestral). Código en `src/backtesting/`; se ejecuta con `python -m src.backtesting.fase14`. Hallazgos: ninguna estrategia supera al IBR; el 1/N tiene el mejor Sharpe en ambos universos y ninguna estrategia de riesgo lo supera (diferencias negativas, no significativas tras Holm); los costos no explican el resultado.
 15. **Fase 15 — Evaluación final en el bloque de prueba (plan aprobado DEC-034; resultados DEC-036):** ejecutada una sola vez sobre enero 2025–septiembre 2026, tras un ensayo que reprodujo las Fases 7–14. Código en `src/evaluacion_final.py`. Se confirman fuera de muestra: el rendimiento diario no es predecible mejor que la media; EWMA es una referencia difícil de superar en volatilidad; el VaR normal subestima la cola; ninguna estrategia de riesgo supera al 1/N (aunque en 2025–2026 la renta variable superó al IBR). RF y GB superan a HAR en volatilidad semanal en el análisis principal, pero no en la sensibilidad sin tratamiento de fechas sospechosas.
 16. **Fase 16 — Robustez (exploratoria; plan DEC-037, resultados DEC-038):** 24 configuraciones de portafolio (ventana × peso máximo × universo), volatilidad y VaR año por año y rendimiento año por año, 2021–2026. Código en `src/robustez/fase16.py`; se ejecuta con `python -m src.robustez.fase16`. Las cuatro conclusiones centrales son robustas: ninguna estrategia supera al 1/N en ninguna configuración; EWMA está en el MCS todos los años; el VaR normal subestima la cola todos los años; el rendimiento no es predecible en ningún año.
+17. **Fase 17 — Interpretación económica (DEC-039/DEC-040):** qué explica los pesos (sobre todo la volatilidad), beta simple frente a Dimson, riesgo prometido frente a realizado, reversión diaria por microestructura, Ecopetrol y el petróleo, y el ciclo de tasas. Texto en `docs/interpretacion_economica.md`; código en `src/interpretacion/fase17.py`.
 
 Empresas incluidas (tickers de Yahoo Finance):
 

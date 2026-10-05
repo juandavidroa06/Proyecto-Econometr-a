@@ -691,7 +691,26 @@ Cada decisión se registra con el siguiente formato:
   - **E. Ecopetrol y el petróleo.** Correlación y beta de Ecopetrol frente al rendimiento del Brent del día anterior y del mismo día (entrenamiento y validación).
   - **F. Contexto.** Trayectoria del IBR (mínimo, máximo y fechas) y rendimiento anual del 1/N de la Fase 14 y la Fase 15 frente al IBR, por año.
 - **Lo que no se hará:** atribuir causalidad; usar afirmaciones de contexto (eventos políticos o corporativos) sin marcarlas como hipótesis que el equipo debe respaldar con fuentes.
-- **Estado:** Plan registrado; resultados en DEC-040.
+- **Estado:** Plan registrado; ejecutado sin cambios. Resultados en DEC-040.
+
+---
+
+### DEC-040: Resultados de la Fase 17 — interpretación económica
+
+- **Fecha:** 2026-10-05
+- **Fase:** Fase 17 — Interpretación económica
+- **Ejecución:** plan DEC-039 sin cambios (A–E con 2020–2024; F con resultados publicados). Texto completo en `docs/interpretacion_economica.md`.
+- **Resultados frente a las hipótesis del plan:**
+  - **A (qué explica los pesos):** domina la **volatilidad** (correlación de rangos peso-volatilidad entre −0,72 y −0,77 en mínima varianza y paridad de riesgo, −0,50 en mínimo CVaR; negativa en el 96–100 % de los rebalanceos). La correlación con las demás acciones pesa poco (−0,11 a −0,18) y la iliquidez casi nada (+0,07 a +0,18). Peso medio de las 5 ilíquidas: 57–59 % frente al 55,6 % del 1/N (máximos de 78–90 %).
+  - **B (falsa diversificación de las ilíquidas): hipótesis NO confirmada.** La beta de Dimson supera a la simple en 8 de 9 acciones (subestimación de hasta el 34 %, en Grupo Bolívar), pero la relación con la iliquidez no es significativa (Spearman 0,18; p = 0,64). Ecopetrol, la más líquida, muestra una beta adelantada de 0,32 (se mueve antes que el resto); Nutresa es la excepción (beta de Dimson menor que la simple; *hipótesis*: precio dominado por las ofertas de adquisición).
+  - **C (error de estimación): confirmada en parte.** Las optimizadas prometen menos riesgo que el 1/N (volatilidad ex ante 13,9–15,3 % frente al 16,0 %), pero el mes siguiente la volatilidad realizada del 1/N (14,1 %) es igual o menor que la suya (14,1–15,2 %). No subestiman su riesgo mucho más que el 1/N (razón realizada/estimada 0,95–0,99 frente a 0,84): la **reducción de riesgo prometida desaparece fuera de muestra**.
+  - **D (reversión por microestructura): apoyada, con poca potencia.** Autocorrelación de primer orden negativa en las menos líquidas (ETB −0,28; Promigas −0,19; Celsia −0,13) y positiva en Ecopetrol (+0,10); Spearman iliquidez-autocorrelación −0,62 (p = 0,08, n = 9).
+  - **E (petróleo):** Ecopetrol tiene correlación de 0,51 (entrenamiento) y 0,32 (validación) con el Brent del mismo día y de 0,07–0,08 con el del día anterior: la información del petróleo se incorpora el mismo día (explica por qué el Brent rezagado no predijo en la Fase 8).
+  - **F (contexto):** IBR de 1,61 % (2021-03-15) a 12,35 % (2023-05-26) y 8,96 % al cierre de 2024. 1/N de 9 empresas: −4,0 % anual en 2021–2023 (IBR 7,3 %); +29,6 % en 2024, +55,8 % en 2025 y +39,9 % en 2026, por encima del IBR. Relación con el ciclo de tasas presentada como **hipótesis**, no como causalidad.
+- **Correcciones durante la ejecución:** el título del panel B del gráfico afirmaba la hipótesis B; se cambió a un título descriptivo al verse que no se confirma.
+- **Evidencia:** `resultados/fase17/*.csv`, `resultados/graficos/fase17_interpretacion.png`, `docs/interpretacion_economica.md`; código en `src/interpretacion/fase17.py`; 4 tests en `tests/test_interpretacion_fase17.py` (196 en total).
+- **Pendiente para el equipo:** respaldar con fuentes las afirmaciones de contexto marcadas como hipótesis (ciclo de tasas, ofertas por Nutresa, ciclo político y fiscal) antes del informe final.
+- **Estado:** Pendiente de revisión del equipo.
 
 ---
 
