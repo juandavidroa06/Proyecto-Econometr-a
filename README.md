@@ -1,6 +1,6 @@
 # Portafolio Colombiano — Proyecto de Econometría
 
-> **Estado del proyecto:** En desarrollo — Fases 0 a 14 implementadas; siguiente: Fase 15 (Comparación final en el bloque de prueba)
+> **Estado del proyecto:** En desarrollo — Fases 0 a 15 completadas (evaluación final en el bloque de prueba hecha); siguiente: Fase 16 (Robustez)
 > **Última actualización:** Octubre 2026
 
 ---
@@ -77,7 +77,9 @@ código y en `informes/diario_decisiones.md`):
 │   ├── riesgo/            # VaR, Expected Shortfall y backtesting (Fase 11)
 │   ├── volatilidad_semanal/  # Volatilidad y rendimiento semanales (DEC-029/030)
 │   ├── optimizacion/      # Optimización con restricciones y sectores (Fases 12–13)
-│   └── backtesting/       # Simulación walk-forward con costos (Fase 14)
+│   ├── backtesting/       # Simulación walk-forward con costos (Fase 14)
+│   ├── informe/           # Gráficos de resultados ya congelados
+│   └── evaluacion_final.py  # Fase 15: único módulo que abre el bloque de prueba
 ├── modelos/           # Modelos entrenados (fases posteriores)
 ├── resultados/        # Métricas, reportes y gráficos
 │   └── graficos/      # Gráficos del análisis exploratorio
@@ -109,6 +111,7 @@ Fases implementadas (las decisiones marcadas como pendientes requieren aprobaci�
 12. **Extensión — volatilidad semanal (plan registrado antes de ejecutar, DEC-029/DEC-030):** varianza realizada de la semana siguiente de las 4 acciones líquidas con EWMA, GARCH, HAR, Random Forest, Gradient Boosting y MLP. Código en `src/volatilidad_semanal/`; se ejecuta con `python -m src.volatilidad_semanal.ejecutar`. Hallazgos: los modelos de ML quedan numéricamente por delante de HAR pero sin significancia (Holm p = 0,40; los 6 en el MCS); el rendimiento semanal tampoco es predecible.
 13. **Fases 12–13 — Optimización con restricciones:** 1/N, mínima varianza (muestral y Ledoit-Wolf), mínimo CVaR 95 %, paridad de riesgo, máximo Sharpe y máximo retorno con volatilidad acotada, con máximo 30 % por acción y 40 % por sector, y el IBR como tasa libre de riesgo (DEC-031). Código en `src/optimizacion/`; se ejecuta con `python -m src.optimizacion.fase12`. Hallazgos: con 9 empresas los portafolios basados en riesgo superan al 1/N y el máximo Sharpe es el peor en validación; con las 4 líquidas ningún portafolio supera al IBR en 2024.
 14. **Fase 14 — Backtesting walk-forward (plan registrado, DEC-032/DEC-033):** enero 2021–diciembre 2024, rebalanceo mensual con ventana móvil de 252 días y costos de 20 pb (sensibilidad 0 y 50 pb; robustez trimestral). Código en `src/backtesting/`; se ejecuta con `python -m src.backtesting.fase14`. Hallazgos: ninguna estrategia supera al IBR; el 1/N tiene el mejor Sharpe en ambos universos y ninguna estrategia de riesgo lo supera (diferencias negativas, no significativas tras Holm); los costos no explican el resultado.
+15. **Fase 15 — Evaluación final en el bloque de prueba (plan aprobado DEC-034; resultados DEC-036):** ejecutada una sola vez sobre enero 2025–septiembre 2026, tras un ensayo que reprodujo las Fases 7–14. Código en `src/evaluacion_final.py`. Se confirman fuera de muestra: el rendimiento diario no es predecible mejor que la media; EWMA es una referencia difícil de superar en volatilidad; el VaR normal subestima la cola; ninguna estrategia de riesgo supera al 1/N (aunque en 2025–2026 la renta variable superó al IBR). RF y GB superan a HAR en volatilidad semanal en el análisis principal, pero no en la sensibilidad sin tratamiento de fechas sospechosas.
 
 Empresas incluidas (tickers de Yahoo Finance):
 
