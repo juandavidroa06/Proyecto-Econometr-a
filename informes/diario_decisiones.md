@@ -644,4 +644,17 @@ Cada decisión se registra con el siguiente formato:
 
 ---
 
+### DEC-037: Plan registrado ANTES de ejecutar — Fase 16, análisis de robustez (exploratorio)
+
+- **Fecha:** 2026-10-05 (registrado y commiteado antes de calcular cualquier resultado de robustez)
+- **Fase:** Fase 16 — Análisis de robustez
+- **Carácter:** **exploratorio**. El bloque de prueba ya se usó en la Fase 15 (DEC-036), así que este análisis usa toda la muestra (2020-01 a 2026-09) y no reemplaza la evaluación confirmatoria; sirve para ver si las cuatro conclusiones centrales dependen del periodo o de las decisiones de diseño. Se aplica la regla de fechas sospechosas de DEC-034 a 2025–2026 (como en la variante principal).
+- **R1 — Portafolios (conclusión C4: ninguna estrategia de riesgo supera al 1/N).** Backtesting walk-forward de DEC-032 (mensual, 20 pb) de enero 2021 a septiembre 2026 en una rejilla de **27 configuraciones**: ventana de estimación de 126, 252 o 504 días × peso máximo por acción de 20 %, 30 % o 50 % × universo {9 empresas con límite sectorial 40 %, 4 líquidas sin límite, 7 empresas sin ETB ni Nutresa (la más ilíquida y la que tuvo OPA) con límite sectorial 40 %}. Las combinaciones infactibles (p. ej. 4 acciones con máximo 20 %) se registran y se omiten. Con 504 días el backtesting empieza cuando hay historia suficiente (enero 2022). Métricas por subperiodo (2021–2023, 2024, 2025–2026) y total. **Criterio:** C4 es robusta si, en el total, ninguna estrategia de riesgo tiene mayor Sharpe que el 1/N en más de la mitad de las configuraciones factibles.
+- **R2 — Volatilidad diaria (conclusión C2: EWMA es difícil de superar) y VaR (C3: el VaR normal subestima la cola; FHS es el mejor calibrado).** Para las 4 líquidas y cada año calendario 2021–2026: GARCH(1,1)-t y varianza constante estimados con **todos los datos anteriores al año** (ventana expansiva); EWMA con λ = 0,90, 0,94 y 0,97; pronósticos a un paso dentro del año. QLIKE y MCS al 10 % por año (promediando las 4 acciones por fecha). VaR 99 % a un día con los 4 métodos de la Fase 11 (misma historia expansiva): excesos por año frente a los esperados. **Criterios:** C2 robusta si algún EWMA está en el MCS en todos los años; C3 robusta si el normal-EWMA tiene más excesos que los esperados en la mayoría de los años y FHS queda más cerca de lo esperado que el normal-EWMA en la mayoría de los años.
+- **R3 — Rendimiento diario (conclusión C1: no es predecible mejor que la media).** Para cada año 2021–2026, ARIMA (BIC), Random Forest y Gradient Boosting (misma rejilla y validación cruzada temporal de la Fase 8) estimados con todos los datos anteriores al año, pronóstico del día siguiente dentro del año, frente a la media de esa historia y al cero. Diebold-Mariano con pérdidas promediadas por fecha y **Holm por año** (3 pruebas). MLP y LSTM no se incluyen (coste de cómputo; su resultado ya fue nulo en validación y prueba). **Criterio:** C1 robusta si en ningún año algún modelo supera a la media con Holm al 5 %.
+- **Lo que no se hará:** cambiar rejillas, años, criterios o umbrales después de ver resultados; presentar estos resultados como confirmatorios.
+- **Estado:** Plan registrado; resultados en DEC-038.
+
+---
+
 *Las decisiones siguientes se registrarán conforme avance el proyecto.*
