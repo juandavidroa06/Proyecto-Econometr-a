@@ -678,4 +678,21 @@ Cada decisión se registra con el siguiente formato:
 
 ---
 
+### DEC-039: Plan registrado ANTES de ejecutar — Fase 17, interpretación económica
+
+- **Fecha:** 2026-10-05 (registrado antes de calcular)
+- **Fase:** Fase 17 — Interpretación económica
+- **Carácter:** explicativo y descriptivo (no confirmatorio). Los análisis A–E usan **solo entrenamiento y validación** (2020–2024); el F describe la trayectoria del IBR y del 1/N en toda la muestra a partir de resultados ya publicados.
+- **Preguntas y análisis:**
+  - **A. ¿Por qué ciertas empresas reciben más peso?** Para cada rebalanceo de la Fase 14 (9 empresas, 2021–2024) y cada empresa: volatilidad, correlación media con las demás, proporción de días sin cambio de precio y rendimiento medio en la ventana de 252 días. Correlación de rangos (Spearman) entre el peso y cada característica, por estrategia, y peso medio de las 5 ilíquidas frente al 1/N (5/9).
+  - **B. ¿Las acciones ilíquidas parecen menos riesgosas de lo que son?** Para cada empresa (entrenamiento): beta frente al mercado (promedio de las otras 8) con regresión simple y con el ajuste de Dimson (1979: suma de las betas de los rezagos −1, 0 y +1). Hipótesis: la beta simple subestima la exposición de las ilíquidas (negociación no sincrónica), lo que las hace atractivas para la mínima varianza ("falsa diversificación").
+  - **C. ¿Por qué el 1/N gana fuera de muestra?** Para cada rebalanceo de la Fase 14 y estrategia: volatilidad estimada con la ventana (ex ante) frente a la realizada el mes siguiente (ex post). Hipótesis: las estrategias optimizadas subestiman su riesgo futuro más que el 1/N (error de estimación que el optimizador explota).
+  - **D. ¿Por qué el último rendimiento aparece como variable importante (Fases 8–9) pero no da capacidad predictiva?** Autocorrelación de primer orden de cada empresa (entrenamiento) frente a su iliquidez (Spearman). Hipótesis: autocorrelación negativa mayor en ilíquidas (rebote entre precios de compra y venta), un efecto de microestructura y no una oportunidad explotable con costos.
+  - **E. Ecopetrol y el petróleo.** Correlación y beta de Ecopetrol frente al rendimiento del Brent del día anterior y del mismo día (entrenamiento y validación).
+  - **F. Contexto.** Trayectoria del IBR (mínimo, máximo y fechas) y rendimiento anual del 1/N de la Fase 14 y la Fase 15 frente al IBR, por año.
+- **Lo que no se hará:** atribuir causalidad; usar afirmaciones de contexto (eventos políticos o corporativos) sin marcarlas como hipótesis que el equipo debe respaldar con fuentes.
+- **Estado:** Plan registrado; resultados en DEC-040.
+
+---
+
 *Las decisiones siguientes se registrarán conforme avance el proyecto.*
