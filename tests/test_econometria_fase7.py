@@ -139,3 +139,18 @@ def test_varianza_constante_es_la_de_train():
     h = garch.varianza_constante(s[:500], s[500:])
     assert h.nunique() == 1
     assert h.iloc[0] == pytest.approx((s[:500] * 100).var(ddof=1))
+
+
+def test_candidato_arima_que_falla_queda_registrado(monkeypatch):
+    original = arima._ajustar
+
+    def falla_en_2_2(serie, orden):
+        if orden == (2, 2):
+            raise np.linalg.LinAlgError("LU decomposition error.")
+        return original(serie, orden)
+
+    monkeypatch.setattr(arima, "_ajustar", falla_en_2_2)
+    orden, tabla = arima.seleccionar_orden(_ar1()[:500], 2, 2, "bic")
+    fila = tabla[(tabla["p"] == 2) & (tabla["q"] == 2)].iloc[0]
+    assert not fila["convergio"] and "LinAlgError" in fila["avisos"]
+    assert orden == (1, 0)

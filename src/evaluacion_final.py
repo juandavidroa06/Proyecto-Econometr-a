@@ -98,6 +98,20 @@ def aplicar_regla(bloques):
     return nuevos, detectadas
 
 
+def cargar_muestra_completa():
+    """Muestra completa 2020-01 a 2026-09 para análisis EXPLORATORIOS posteriores
+    a la Fase 15 (p. ej. robustez, DEC-037/038), con la regla de DEC-034
+    aplicada al bloque de prueba. Este módulo sigue siendo el único punto de
+    acceso a la prueba; quien use esta función debe rotular sus resultados
+    como exploratorios.
+    """
+    rep = RUTA_FASE15 / "final" / "huellas_resultados.json"
+    if not rep.exists():
+        raise RuntimeError("La evaluación final aún no se ha hecho: la prueba no puede usarse.")
+    bloques, detectadas = aplicar_regla(cargar_bloques("final"))
+    return {b: pd.concat(par) for b, par in bloques.items()}, detectadas
+
+
 # --- H15-1: rendimiento diario ------------------------------------------------------
 
 def familia_media(bloques, iliquidos, fin_hist, fin_eval):

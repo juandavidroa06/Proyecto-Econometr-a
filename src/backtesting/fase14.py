@@ -54,8 +54,14 @@ BOOT = dict(n_remuestras=2000, largo_bloque=21, semilla=SEMILLA_ALEATORIA)
 def pesos_estrategia(estrategia, ventana, restr):
     if estrategia == "igual":
         w = pd.Series(np.full(restr.n, 1 / restr.n), index=restr.activos)
-        restr.verificar(w.to_numpy())
-        return w
+        try:
+            restr.verificar(w.to_numpy())
+            return w
+        except ValueError:
+            # 1/N infactible (p. ej. por el límite sectorial): se usa el
+            # portafolio factible más cercano a 1/N, como en DEC-031.
+            objetivo = w.to_numpy()
+            return opt._resolver(lambda x: float(((x - objetivo) ** 2).sum()), restr)
     ins = insumos(ventana)
     if estrategia == "min_var_muestral":
         return opt.minima_varianza(ins["cov"], restr)
@@ -82,17 +88,19 @@ def tasa_diaria(tasas, indice):
     return alineada
 
 
-def correr_backtesting(rend, rf, universos, inicio, fin, periodos):
+def correr_backtesting(rend, rf, universos, inicio, fin, periodos, ventana=VENTANA,
+                       peso_max=PESO_MAXIMO_ACTIVO):
     """Núcleo del backtesting de DEC-032 (lo usan la Fase 14 y la evaluación final).
 
     ``rend``: rendimientos simples; ``rf``: tasa diaria; ``universos``:
     {nombre: (activos, limite_sector)}; rebalanceos desde el último día del
     mes de ``inicio`` hasta ``fin``; ``periodos``: {nombre: (ini, fin)}.
+    ``ventana`` y ``peso_max`` permiten el análisis de robustez (Fase 16).
     Retorna dict con metricas, rotacion, pruebas, pesos y riqueza.
     """
     filas_met, filas_rot, series, pesos_guardados = [], [], {}, []
     for nombre_u, (activos, limite) in universos.items():
-        restr = opt.Restricciones(activos, PESO_MAXIMO_ACTIVO, SECTORES, limite)
+        restr = opt.Restricciones(activos, peso_max, SECTORES, limite)
         mensuales = motor.fechas_rebalanceo(rend.index, inicio,
                                             fin, "M")
         trimestrales = motor.fechas_rebalanceo(rend.index, inicio,
@@ -102,7 +110,7 @@ def correr_backtesting(rend, rf, universos, inicio, fin, periodos):
             objetivos = {}
             for f in mensuales:
                 objetivos[f] = pesos_estrategia(estrategia, motor.ventana_estimacion(
-                    rend[activos], f, VENTANA), restr)
+                    rend[activos], f, ventana), restr)
                 pesos_guardados.append({"universo": nombre_u, "estrategia": estrategia,
                                         "fecha": f, **objetivos[f].to_dict()})
             for frecuencia, fechas in (("mensual", mensuales), ("trimestral", trimestrales)):

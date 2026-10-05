@@ -653,7 +653,28 @@ Cada decisión se registra con el siguiente formato:
 - **R2 — Volatilidad diaria (conclusión C2: EWMA es difícil de superar) y VaR (C3: el VaR normal subestima la cola; FHS es el mejor calibrado).** Para las 4 líquidas y cada año calendario 2021–2026: GARCH(1,1)-t y varianza constante estimados con **todos los datos anteriores al año** (ventana expansiva); EWMA con λ = 0,90, 0,94 y 0,97; pronósticos a un paso dentro del año. QLIKE y MCS al 10 % por año (promediando las 4 acciones por fecha). VaR 99 % a un día con los 4 métodos de la Fase 11 (misma historia expansiva): excesos por año frente a los esperados. **Criterios:** C2 robusta si algún EWMA está en el MCS en todos los años; C3 robusta si el normal-EWMA tiene más excesos que los esperados en la mayoría de los años y FHS queda más cerca de lo esperado que el normal-EWMA en la mayoría de los años.
 - **R3 — Rendimiento diario (conclusión C1: no es predecible mejor que la media).** Para cada año 2021–2026, ARIMA (BIC), Random Forest y Gradient Boosting (misma rejilla y validación cruzada temporal de la Fase 8) estimados con todos los datos anteriores al año, pronóstico del día siguiente dentro del año, frente a la media de esa historia y al cero. Diebold-Mariano con pérdidas promediadas por fecha y **Holm por año** (3 pruebas). MLP y LSTM no se incluyen (coste de cómputo; su resultado ya fue nulo en validación y prueba). **Criterio:** C1 robusta si en ningún año algún modelo supera a la media con Holm al 5 %.
 - **Lo que no se hará:** cambiar rejillas, años, criterios o umbrales después de ver resultados; presentar estos resultados como confirmatorios.
-- **Estado:** Plan registrado; resultados en DEC-038.
+- **Estado:** Plan registrado; ejecutado sin cambios de rejillas ni criterios. Resultados en DEC-038.
+
+---
+
+### DEC-038: Resultados del plan DEC-037 — Fase 16, robustez (exploratoria)
+
+- **Fecha:** 2026-10-05
+- **Fase:** Fase 16 — Análisis de robustez
+- **Ejecución:** plan DEC-037 sin cambios en rejillas, años ni criterios. Muestra completa 2020-01 a 2026-09 a través de `evaluacion_final.cargar_muestra_completa` (sigue siendo el único módulo que abre la prueba), con la regla de DEC-034 aplicada a 2025–2026. **Resultados exploratorios.**
+- **Situaciones no previstas por el plan, resueltas con criterios ya usados antes:**
+  1. Tres configuraciones de R1 son infactibles (4 líquidas con máximo 20 %): se registran en `r1_omitidas.csv` y se omiten; quedan **24 configuraciones**.
+  2. En el universo de 7 empresas el 1/N viola el límite sectorial (financiero 3/7 = 43 %): se usa el portafolio factible más cercano al 1/N, como en DEC-031. La Fase 14 queda idéntica byte a byte.
+  3. En R3 (2026) un candidato ARIMA lanzó un error numérico (`LinAlgError`) al ajustarse: ahora se registra como "no convergió" y la selección continúa; las fases anteriores no cambian. Test nuevo.
+  4. Con ventana de 504 días el backtesting empieza en febrero de 2022.
+- **Resultados frente a los criterios registrados:**
+  - **C4 (ninguna estrategia de riesgo supera al 1/N): ROBUSTA.** En el periodo total, **ninguna** de las 4 estrategias supera al 1/N en **ninguna** de las 24 configuraciones (96 de 96 diferencias negativas; criterio: no más de la mitad). Diferencia media de Sharpe: paridad de riesgo −0,09, mínima varianza Ledoit-Wolf −0,19, mínima varianza muestral −0,32, mínimo CVaR −0,32. Ganan al 1/N solo de forma ocasional en subperiodos (sobre todo 2024: entre el 21 % y el 33 % de las configuraciones). El resultado se mantiene al quitar ETB y Nutresa.
+  - **C2 (EWMA es difícil de superar en volatilidad): ROBUSTA.** Algún EWMA está en el MCS en los 6 años (2021–2026); un EWMA tiene la menor QLIKE en 5 de 6 años (en 2022 la varianza constante, con EWMA también en el MCS). GARCH queda fuera del MCS en 2021.
+  - **C3 (el VaR normal subestima la cola; FHS mejor calibrado): ROBUSTA.** El normal-EWMA tiene más excesos que los esperados al 99 % en **los 6 años** (p. ej. 2024: 20 frente a 10; 2022: 23 frente a 10,4), y FHS está más cerca de lo esperado que el normal-EWMA en **los 6 años**. FHS es algo conservador en 2021 y 2023. La simulación histórica falla con fuerza en 2022 (29 excesos frente a 10,4).
+  - **C1 (el rendimiento diario no es predecible mejor que la media): ROBUSTA.** En ningún año 2021–2026 ARIMA, Random Forest o Gradient Boosting superan a la media tras Holm (p ajustado mínimo 0,07, y ese es un caso en que ARIMA es **peor** que la media, en 2022). R²_OS entre −8,8 % y +1,2 %.
+- **Conclusión:** las cuatro conclusiones centrales no dependen del periodo, de la ventana de estimación, del peso máximo ni del universo dentro de los rangos probados. Son exploratorias porque usan datos de prueba ya vistos, pero apuntan en la misma dirección que la evaluación confirmatoria (DEC-036).
+- **Evidencia:** `resultados/fase16/*.csv` y `resultados/graficos/fase16_robustez_portafolios.png`; código en `src/robustez/fase16.py`; 4 tests en `tests/test_robustez_fase16.py` y 1 en `tests/test_econometria_fase7.py` (192 en total).
+- **Estado:** Exploratorio, pendiente de revisión del equipo.
 
 ---
 

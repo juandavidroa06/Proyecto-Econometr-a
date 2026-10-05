@@ -68,7 +68,14 @@ def seleccionar_orden(train, max_p=3, max_q=3, criterio="bic"):
         raise ValueError("criterio debe ser 'aic' o 'bic'.")
     filas = []
     for p, q in itertools.product(range(max_p + 1), range(max_q + 1)):
-        res, avisos = _ajustar(train, (p, q))
+        try:
+            res, avisos = _ajustar(train, (p, q))
+        except (np.linalg.LinAlgError, ValueError) as exc:
+            # Fallo numérico de un candidato: se registra como no convergido
+            # (no se oculta ni se detiene la selección; DEC-038).
+            filas.append({"p": p, "q": q, "aic": np.nan, "bic": np.nan, "convergio": False,
+                          "avisos": f"Error de ajuste: {type(exc).__name__}: {exc}"})
+            continue
         convergio = bool(res.mle_retvals.get("converged", True)) if res.mle_retvals else True
         filas.append({"p": p, "q": q, "aic": float(res.aic), "bic": float(res.bic),
                       "convergio": convergio, "avisos": " | ".join(avisos)})
