@@ -1,0 +1,6 @@
+modelo,max_depth,min_samples_leaf,max_features,learning_rate,ocultas,decaimiento,epoca_optima,mse_parada
+random_forest,3,50,0.3,,,,,
+gradient_boosting,2,200,,0.02,,,,
+mlp,,,,,"(64, 32)",0.0001,77,1.1748645305633545
+random_forest_rendimiento,3,200,0.3,,,,,
+gradient_boosting_rendimiento,2,200,,0.02,,,,

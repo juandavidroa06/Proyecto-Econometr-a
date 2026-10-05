@@ -490,7 +490,27 @@ Cada decisión se registra con el siguiente formato:
   - Secundarias: MCS al 10 % sobre los 6 modelos (QLIKE); HAR frente a EWMA y GARCH (Diebold-Mariano con Holm).
 - **Análisis de robustez del resultado diario:** rendimiento semanal de la semana siguiente con RF y GB frente a la media de entrenamiento y el cero (RMSE, Diebold-Mariano, Holm). Expectativa declarada: poca potencia (≈ 52 semanas por acción); se reporta sea cual sea el resultado.
 - **Lo que no se hará:** cambiar objetivo, universo, variables, pérdida o prueba después de ver los resultados de validación; abrir el bloque de prueba (eso es la Fase 15).
-- **Estado:** Plan registrado; resultados en DEC-030.
+- **Estado:** Plan registrado; ejecutado sin cambios. Resultados en DEC-030.
+
+---
+
+### DEC-030: Resultados del plan DEC-029 — volatilidad y rendimiento semanales
+
+- **Fecha:** 2026-10-05
+- **Fase:** Extensión de las Fases 7–10, previa a la Fase 12
+- **Ejecución:** se siguió el plan DEC-029 sin cambios de objetivo, universo, variables, pérdida ni prueba (commit del plan anterior al del código y los resultados). Detalles de implementación no especificados en el plan: HAR estimado **por empresa**; piso de 1e-4 %² antes de tomar logaritmos (una semana objetivo con RV = 0 en todo el periodo); smearing de RF/GB con residuos fuera de pliegue de la validación cruzada temporal y del MLP con el conjunto de parada; misma rejilla y lote del MLP que la Fase 9. Filas: 812 semanas-empresa en entrenamiento (16 descartadas por ventanas incompletas al inicio) y 208 en validación (52 semanas × 4).
+- **Resultados (validación 2024):**
+  - QLIKE medio (menor es mejor): MLP 3,531; EWMA 3,543; Gradient Boosting 3,556; Random Forest 3,566; GARCH 3,610; HAR 3,637.
+  - **H1 (retador mejor que HAR): NO se confirma.** Los tres retadores tienen menor QLIKE que HAR, pero Diebold-Mariano da p = 0,19 (RF), 0,13 (GB) y 0,15 (MLP); **0,40 tras Holm**.
+  - **MCS al 10 %: los 6 modelos quedan en el conjunto** (p_MCS ≥ 0,21). Con 52 semanas no se distinguen.
+  - Secundarias: HAR peor que EWMA (DM = 2,14, p = 0,037 sin corregir; **0,074 tras Holm**, no significativa); HAR frente a GARCH, p = 0,56.
+  - HAR: el componente mensual domina (β entre 0,27 y 0,55) y el diario no aporta (β ≈ 0 o negativo); factores de smearing 1,6–2,6, reflejo de lo ruidosa que es la RV semanal construida con 5 rendimientos diarios.
+  - **Rendimiento semanal (robustez):** RF y GB no superan a la media ni al cero (p ≥ 0,17 sin corregir; ≥ 0,68 tras Holm). **El resultado nulo del rendimiento diario se mantiene a horizonte semanal.**
+  - Reproducibilidad: segunda ejecución con pronósticos idénticos hasta 4e-14 (paralelismo del Random Forest).
+- **Interpretación:** A horizonte semanal, los modelos de aprendizaje automático (en especial el MLP) quedan **numéricamente** por delante de las referencias econométricas, pero la diferencia no es estadísticamente significativa con un año de validación. EWMA, sin parámetros estimados, sigue entre los mejores, como en la Fase 10. El rendimiento sigue sin ser predecible.
+- **Implicaciones:** (1) Para la optimización y el backtesting (Fases 12 y 14) se mantiene EWMA/FHS como estimador principal de riesgo; el MLP de volatilidad semanal puede incluirse como alternativa en el backtesting, donde se medirá su valor económico. (2) La evaluación en el bloque de prueba (Fase 15) duplicará la muestra (≈ 90 semanas); el plan de esa evaluación debe registrarse igual que DEC-029.
+- **Evidencia utilizada:** `resultados/semanal_*.csv` (filas, volatilidad, pruebas, volatilidad por empresa, rendimiento, coeficientes HAR, validación cruzada, selección del MLP, hiperparámetros, pronósticos) y `resultados/graficos/semanal_volatilidad_validacion.png`; código en `src/volatilidad_semanal/` (`panel.py`, `ejecutar.py`); 6 tests en `tests/test_volatilidad_semanal.py` (RV semanal, objetivo = semana siguiente, semanas con < 3 días, variables sin información futura, separación por semana objetivo, HAR y smearing).
+- **Estado:** Pendiente de aprobación del equipo.
 
 ---
 
