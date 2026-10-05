@@ -537,4 +537,23 @@ Cada decisión se registra con el siguiente formato:
 
 ---
 
+### DEC-032: Plan registrado ANTES de ejecutar — Fase 14, backtesting walk-forward
+
+- **Fecha:** 2026-10-05 (registrado y commiteado antes de calcular cualquier resultado del backtesting)
+- **Fase:** Fase 14 — Backtesting
+- **Periodo:** solo entrenamiento + validación (2020–2024); el bloque de prueba sigue cerrado y se usará una sola vez, con este mismo código, en la Fase 15. Primera estimación con los 252 días previos al cierre de diciembre de 2020: el backtesting cubre **enero de 2021 a diciembre de 2024** (≈ 48 meses). Se reportan por separado 2021–2023 y 2024, y el total.
+- **Mecánica:**
+  - **Rebalanceo mensual** (último día bursátil de cada mes); robustez: trimestral.
+  - En cada rebalanceo los insumos se estiman con una **ventana móvil de 252 días** hasta ese día inclusive (filas completas; solo información pasada). Los pesos se aplican desde el día siguiente.
+  - Entre rebalanceos los pesos derivan con los precios (comprar y mantener). Rotación = Σ|w_objetivo − w_derivado|; el costo es c × rotación, descontado el día del rebalanceo; la compra inicial cuenta como rotación 1.
+  - Días sin precio de una acción (incluido el 2024-05-03 de DEC-022): rendimiento 0 para valorar la posición (el precio no cambia); el movimiento queda en el rendimiento del siguiente día con precio.
+  - **Costos por lado: 20 pb (principal); sensibilidad 0 y 50 pb.**
+- **Estrategias** (de DEC-031): 1/N (referencia), mínima varianza muestral, mínima varianza Ledoit-Wolf, mínimo CVaR 95 % y paridad de riesgo (Ledoit-Wolf). Máximo 30 % por acción. **Universo de 9 empresas con límite sectorial de 40 %**; **universo de 4 líquidas sin límite sectorial** (con el límite casi no queda libertad, DEC-031). El máximo Sharpe se excluye (degenerado o peor en DEC-031). El universo líquido se fija con entrenamiento (DEC-020) para todo el periodo. Referencia adicional: invertir al IBR overnight.
+- **Métricas:** rendimiento anual, volatilidad, Sharpe sobre el IBR diario (efectivo), máxima caída, CVaR 95 % diario realizado (definición robusta de DEC-031), rotación mensual media, costo total y valor final de 1 peso invertido.
+- **Hipótesis principal H1:** alguna estrategia basada en riesgo tiene mayor Sharpe neto (20 pb) que el 1/N en enero 2021–diciembre 2024. Prueba: diferencia de Sharpe frente al 1/N con **bootstrap por bloques** (bloques de 21 días, 2 000 réplicas, semilla 42), p-valor bilateral; **Holm sobre las 8 pruebas** (4 estrategias × 2 universos); nivel 5 %.
+- **Lo que no se hará:** cambiar ventana, frecuencia, costos, estrategias, restricciones o la prueba después de ver resultados; abrir el bloque de prueba.
+- **Estado:** Plan registrado; resultados en DEC-033.
+
+---
+
 *Las decisiones siguientes se registrarán conforme avance el proyecto.*
