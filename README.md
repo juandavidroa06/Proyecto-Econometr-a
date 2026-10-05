@@ -1,6 +1,6 @@
 # Portafolio Colombiano — Proyecto de Econometría
 
-> **Estado del proyecto:** En desarrollo — Fases 0 a 17 completadas; siguiente: Fase 18 (Agente de IA) o Fase 20 (Informe final)
+> **Estado del proyecto:** En desarrollo — Fases 0 a 18 completadas; Fase 19 (evaluación del agente) lista para ejecutar; pendiente: Fase 20 (Informe final)
 > **Última actualización:** Octubre 2026
 
 ---
@@ -81,6 +81,7 @@ código y en `informes/diario_decisiones.md`):
 │   ├── informe/           # Gráficos de resultados ya congelados
 │   ├── robustez/          # Análisis de robustez exploratorio (Fase 16)
 │   ├── interpretacion/    # Interpretación económica (Fase 17)
+│   ├── agente/            # Agente de IA y su evaluación (Fases 18–19)
 │   └── evaluacion_final.py  # Fase 15: único módulo que abre el bloque de prueba
 ├── modelos/           # Modelos entrenados (fases posteriores)
 ├── resultados/        # Métricas, reportes y gráficos
@@ -116,6 +117,7 @@ Fases implementadas (las decisiones marcadas como pendientes requieren aprobaci�
 15. **Fase 15 — Evaluación final en el bloque de prueba (plan aprobado DEC-034; resultados DEC-036):** ejecutada una sola vez sobre enero 2025–septiembre 2026, tras un ensayo que reprodujo las Fases 7–14. Código en `src/evaluacion_final.py`. Se confirman fuera de muestra: el rendimiento diario no es predecible mejor que la media; EWMA es una referencia difícil de superar en volatilidad; el VaR normal subestima la cola; ninguna estrategia de riesgo supera al 1/N (aunque en 2025–2026 la renta variable superó al IBR). RF y GB superan a HAR en volatilidad semanal en el análisis principal, pero no en la sensibilidad sin tratamiento de fechas sospechosas.
 16. **Fase 16 — Robustez (exploratoria; plan DEC-037, resultados DEC-038):** 24 configuraciones de portafolio (ventana × peso máximo × universo), volatilidad y VaR año por año y rendimiento año por año, 2021–2026. Código en `src/robustez/fase16.py`; se ejecuta con `python -m src.robustez.fase16`. Las cuatro conclusiones centrales son robustas: ninguna estrategia supera al 1/N en ninguna configuración; EWMA está en el MCS todos los años; el VaR normal subestima la cola todos los años; el rendimiento no es predecible en ningún año.
 17. **Fase 17 — Interpretación económica (DEC-039/DEC-040):** qué explica los pesos (sobre todo la volatilidad), beta simple frente a Dimson, riesgo prometido frente a realizado, reversión diaria por microestructura, Ecopetrol y el petróleo, y el ciclo de tasas. Texto en `docs/interpretacion_economica.md`; código en `src/interpretacion/fase17.py`.
+18. **Fase 18 — Agente de IA (DEC-041):** agente de línea de comandos con la API de Claude (`claude-opus-5-5`) y 9 herramientas: consulta el diario y los resultados, ejecuta pruebas sobre entrenamiento o validación, verifica la reproducibilidad de las fases y **solo propone** cambios, que requieren revisión humana. No tiene acceso al bloque de prueba ni puede modificar datos. Cada sesión queda en `informes/bitacora_agente/`. Código en `src/agente/`. La evaluación (Fase 19, plan DEC-042) está en `src/agente/evaluacion.py`.
 
 Empresas incluidas (tickers de Yahoo Finance):
 
@@ -147,7 +149,11 @@ python -m src.pipeline
 # 3. Ejecutar las pruebas
 python -m pytest tests -v
 
-# 4. Abrir el notebook de exploración
+# 4. Agente de IA (requiere credenciales de Anthropic en el entorno; nunca en el código)
+#    set ANTHROPIC_API_KEY=...            (Windows)   |   export ANTHROPIC_API_KEY=...   (Linux/macOS)
+python -m src.agente "¿Qué modelo de volatilidad recomiendan los resultados?"
+
+# 5. Abrir el notebook de exploración
 jupyter notebook notebooks/01_exploracion.ipynb
 ```
 

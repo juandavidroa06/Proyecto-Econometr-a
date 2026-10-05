@@ -48,3 +48,9 @@ scikit-learn==1.9.1
 # además filelock, fsspec, Jinja2, MarkupSafe, mpmath, networkx, setuptools y
 # sympy; no cambió ninguna versión de las dependencias anteriores.
 torch==2.14.1
+
+# --- Agente de IA (Fase 18, DEC-041) ---
+# SDK oficial de Anthropic. Instala además annotated-types, anyio,
+# docstring_parser, h11, httpcore2, httpx2, jiter, pydantic, pydantic_core,
+# sniffio, truststore y typing-inspection; no cambió ninguna versión anterior.
+anthropic==1.11.0

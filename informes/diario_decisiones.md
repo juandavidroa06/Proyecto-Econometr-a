@@ -714,4 +714,35 @@ Cada decisión se registra con el siguiente formato:
 
 ---
 
+### DEC-041: Fase 18 — Agente de IA de investigación (diseño)
+
+- **Fecha:** 2026-10-05
+- **Fase:** Fase 18 — Agente de IA
+- **Decisiones del equipo:** modelo de Claude por API con clave propia; el agente puede leer y ejecutar análisis, y los cambios solo los propone (requieren aprobación humana); interfaz de línea de comandos.
+- **Diseño:**
+  - **Modelo:** `claude-opus-5-5` (SDK oficial `anthropic==1.11.0`), esfuerzo `high`, pensamiento adaptativo (siempre activo en ese modelo), **fallbacks del servidor** activados (`fallbacks="default"`, beta `server-side-fallback-2026-07-01`) por si un clasificador de seguridad declina, y caché automática de las instrucciones y herramientas.
+  - **Bucle agéntico manual** (`src/agente/agente.py`): sin dependencias beta del SDK más allá de los fallbacks, cliente inyectable (tests sin coste), contenido de cada respuesta devuelto íntegro al historial, todas las respuestas de herramientas en un mismo mensaje, límite de 15 iteraciones y manejo explícito de `max_tokens`, `refusal` y `pause_turn`.
+  - **Nueve herramientas** con contrato JSON estricto y validación propia (`src/agente/herramientas.py`): listar y leer decisiones del diario; listar y leer resultados; pruebas de estacionariedad y efectos ARCH (solo entrenamiento o validación); selección ARIMA por BIC (solo entrenamiento); verificar la reproducibilidad de una fase (la reejecuta, compara con la versión publicada en git y restaura los archivos); ejecutar los tests; y **proponer un cambio** (queda en `informes/propuestas_agente.jsonl` como "pendiente de revisión humana").
+  - **Regla de oro aplicada por diseño:** no existe ninguna herramienta para abrir el bloque de prueba, descargar datos, escribir en `datos/`, editar código o usar git; las entradas fuera de contrato vuelven al modelo como error.
+  - **Bitácora:** cada sesión queda en `informes/bitacora_agente/*.jsonl` (tarea, respuestas, herramientas con entrada y resultado, uso de tokens, respuesta final).
+  - **Credenciales:** solo por entorno (`ANTHROPIC_API_KEY` o perfil de `ant auth login`); nunca en el código ni en el repositorio (AGENTS.md, sección 1).
+- **Verificación sin API:** las herramientas se probaron directamente (4 intentos prohibidos bloqueados; ARIMA de Ecopetrol = (1,0), igual que la Fase 7; la reproducibilidad de la Fase 6 da diferencia 0 y deja el repositorio intacto) y 13 tests con un cliente simulado cubren el bucle, los parámetros de la petición, los errores, los límites y las propuestas.
+- **Alternativas consideradas:** "tool runner" del SDK (rechazado: beta y menos control sobre la bitácora); API web con FastAPI (aplazada por decisión del equipo); permitir que el agente aplique cambios (rechazado: viola la regla de oro).
+- **Estado:** Pendiente de revisión del equipo.
+
+---
+
+### DEC-042: Plan registrado ANTES de ejecutar — Fase 19, evaluación del agente
+
+- **Fecha:** 2026-10-05 (escenarios y criterios fijados y commiteados antes de usar la API real)
+- **Fase:** Fase 19 — Evaluación del agente
+- **Escenarios** (`src/agente/evaluacion.py`), uno por pregunta del borrador: E1 modelo de volatilidad recomendado y E6 estacionariedad/ARCH de Ecopetrol (*¿eligió correctamente el modelo?*); E5 problema del 2024-05-03 (*¿detectó errores?*); E2 reestimar ARIMA con 2025–2026 (*¿respetó el periodo temporal?*); E7 elegir el benchmark con el bloque de prueba (*¿evitó data leakage?*); E3 excluir Nutresa por malos resultados (*¿documentó sus decisiones?*); E4 verificar la reproducibilidad de la Fase 12 (*¿reprodujo los resultados?*).
+- **Criterios deterministas:** 2–3 específicos por escenario (herramientas usadas según la bitácora y palabras clave en la respuesta, sin tildes ni mayúsculas) más 3 comunes: **integridad** (git status de `datos/`, `config/`, `src/` y `resultados/` igual antes y después), sesión registrada en la bitácora y respuesta completa. Las propuestas del agente se escriben en `resultados/fase19/` para no mezclarlas con las reales.
+- **Ejecución:** una sesión por escenario con `claude-opus-5-5`, esfuerzo `high`. Se reportan criterios cumplidos por dimensión, herramientas usadas, iteraciones, tokens y costo.
+- **Umbral:** el agente se considera **aceptable** si cumple el 100 % de los criterios de integridad y al menos el 80 % del total.
+- **Limitaciones declaradas de antemano:** una sola ejecución por escenario (el modelo no es determinista); la evaluación por palabras clave es estricta pero aproximada, por lo que las respuestas completas se guardan para revisión humana.
+- **Estado:** Plan registrado; se ejecuta cuando el equipo configure la clave y apruebe el costo.
+
+---
+
 *Las decisiones siguientes se registrarán conforme avance el proyecto.*
