@@ -473,4 +473,25 @@ Cada decisión se registra con el siguiente formato:
 
 ---
 
+### DEC-029: Plan registrado ANTES de ejecutar — volatilidad semanal (y rendimiento semanal como robustez)
+
+- **Fecha:** 2026-10-05 (registrado y commiteado antes de calcular cualquier resultado de este análisis)
+- **Fase:** Extensión de las Fases 7–10 (pronóstico), previa a la Fase 12
+- **Motivo:** Las Fases 7–10 muestran que el rendimiento diario no es predecible mejor que la media (DEC-027), pero que la volatilidad sí lo es (EWMA, DEC-023/DEC-027). El riesgo es lo que usa la optimización (Fase 12). Como el cambio de objetivo ocurre después de ver resultados, el plan se fija aquí antes de ejecutar, para evitar elegir el análisis según el resultado; el resultado nulo diario se mantiene y se reporta.
+- **Datos y universo:** las 4 acciones líquidas según entrenamiento (Celsia, Banco de Bogotá, Ecopetrol, Davivienda PF), con las particiones congeladas (solo entrenamiento y validación). Semanas de calendario que terminan en viernes; una semana es válida si tiene al menos 3 días con rendimiento. Unas 208 semanas por acción en entrenamiento y 52 en validación.
+- **Objetivo principal:** varianza realizada de la semana siguiente, RV_{w+1} = suma de los rendimientos log diarios al cuadrado (en %²) de la semana w+1, pronosticada al cierre de la semana w. Asignación a entrenamiento o validación por la fecha de la semana objetivo.
+- **Modelos:**
+  - Referencias: (a) EWMA diaria (λ = 0,94) × número de días de la semana objetivo; (b) GARCH(1,1)-t de la Fase 7, suma de los pronósticos a 1…n días; (c) **HAR** (Corsi, 2009) sobre log RV con componentes semanal (RV_w), mensual (media de 4 semanas) y diario (último r²), por MCO en entrenamiento. **HAR es la referencia principal.**
+  - Retadores: Random Forest, Gradient Boosting (scikit-learn) y MLP (PyTorch) sobre log RV, con los componentes HAR más: rendimiento y |rendimiento| de la semana, proporción de días sin cambio, volumen relativo, RV promedio de las 4 acciones, |rendimiento| semanal de TRM y Brent (con fecha estrictamente anterior al cierre de la semana) e indicador de empresa. Modelo agrupado de las 4 acciones. **No se incluye LSTM** (≈ 830 observaciones semanales: muestra insuficiente).
+  - Los modelos en log se devuelven a nivel con la corrección de *smearing* de Duan estimada con los residuos de entrenamiento.
+  - Hiperparámetros: validación cruzada temporal por fechas dentro de entrenamiento (RF, GB, mismas rejillas de la Fase 8); MLP con el último 20 % de entrenamiento para parada temprana y 5 semillas (igual que la Fase 9).
+- **Evaluación (validación 2024):** pérdida **QLIKE** (principal; robusta a un proxy ruidoso) y MSE sobre RV_{w+1}; pérdidas promediadas por semana entre las 4 acciones.
+  - **Hipótesis principal H1:** al menos un retador (RF, GB, MLP) tiene menor QLIKE que HAR. Prueba: Diebold-Mariano de cada retador frente a HAR, **Holm sobre las 3 pruebas**, nivel 5 %. Se confirma H1 solo si algún p ajustado < 0,05 con estadístico negativo.
+  - Secundarias: MCS al 10 % sobre los 6 modelos (QLIKE); HAR frente a EWMA y GARCH (Diebold-Mariano con Holm).
+- **Análisis de robustez del resultado diario:** rendimiento semanal de la semana siguiente con RF y GB frente a la media de entrenamiento y el cero (RMSE, Diebold-Mariano, Holm). Expectativa declarada: poca potencia (≈ 52 semanas por acción); se reporta sea cual sea el resultado.
+- **Lo que no se hará:** cambiar objetivo, universo, variables, pérdida o prueba después de ver los resultados de validación; abrir el bloque de prueba (eso es la Fase 15).
+- **Estado:** Plan registrado; resultados en DEC-030.
+
+---
+
 *Las decisiones siguientes se registrarán conforme avance el proyecto.*
