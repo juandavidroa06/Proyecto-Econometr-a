@@ -1,6 +1,6 @@
 # Portafolio Colombiano — Proyecto de Econometría
 
-> **Estado del proyecto:** En desarrollo — Fases 0 a 18 completadas; Fase 19 (evaluación del agente) lista para ejecutar; pendiente: Fase 20 (Informe final)
+> **Estado del proyecto:** En desarrollo — Fases 0 a 19 completadas; pendiente: Fase 20 (Informe final)
 > **Última actualización:** Octubre 2026
 
 ---
@@ -118,6 +118,7 @@ Fases implementadas (las decisiones marcadas como pendientes requieren aprobaci�
 16. **Fase 16 — Robustez (exploratoria; plan DEC-037, resultados DEC-038):** 24 configuraciones de portafolio (ventana × peso máximo × universo), volatilidad y VaR año por año y rendimiento año por año, 2021–2026. Código en `src/robustez/fase16.py`; se ejecuta con `python -m src.robustez.fase16`. Las cuatro conclusiones centrales son robustas: ninguna estrategia supera al 1/N en ninguna configuración; EWMA está en el MCS todos los años; el VaR normal subestima la cola todos los años; el rendimiento no es predecible en ningún año.
 17. **Fase 17 — Interpretación económica (DEC-039/DEC-040):** qué explica los pesos (sobre todo la volatilidad), beta simple frente a Dimson, riesgo prometido frente a realizado, reversión diaria por microestructura, Ecopetrol y el petróleo, y el ciclo de tasas. Texto en `docs/interpretacion_economica.md`; código en `src/interpretacion/fase17.py`.
 18. **Fase 18 — Agente de IA (DEC-041):** agente de línea de comandos con la API de Claude (`claude-opus-5-5`) y 9 herramientas: consulta el diario y los resultados, ejecuta pruebas sobre entrenamiento o validación, verifica la reproducibilidad de las fases y **solo propone** cambios, que requieren revisión humana. No tiene acceso al bloque de prueba ni puede modificar datos. Cada sesión queda en `informes/bitacora_agente/`. Código en `src/agente/`. La evaluación (Fase 19, plan DEC-042) está en `src/agente/evaluacion.py`.
+19. **Fases 18–19 sobre Claude Code (DEC-043/DEC-044):** el agente funciona dentro de Claude Code con la skill `/investigador`, las mismas herramientas (`python -m src.agente.cli`) y un hook que bloquea el acceso a la prueba, las descargas y la escritura en `datos/` (`.claude/settings.json`). Evaluado con 7 escenarios y agentes nuevos: 38 de 39 criterios (97 %) e integridad del 100 %.
 
 Empresas incluidas (tickers de Yahoo Finance):
 

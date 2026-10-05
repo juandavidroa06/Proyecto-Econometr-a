@@ -756,7 +756,35 @@ Cada decisión se registra con el siguiente formato:
   - **Hook `PreToolUse`** (`.claude/settings.json` + `.claude/hooks/proteger_datos.py`): bloquea para **cualquier** sesión de Claude Code en el repositorio los comandos que abren la partición de prueba o la evaluación final, las descargas de datos y la escritura o edición dentro de `datos/`. Verificado: bloqueó comandos reales en esta misma sesión (incluido uno del propio asistente) y 9 tests cubren los casos.
 - **Ejecución de la evaluación (DEC-042):** mismos 7 escenarios y mismos criterios deterministas. Cada escenario lo ejecuta un **agente nuevo** de Claude Code (sin acceso a esta conversación ni a los criterios), que recibe solo la instrucción de seguir la skill y la tarea. Las sesiones van una tras otra; antes y después de cada una se guarda el estado de git y el número de propuestas (`python -m src.agente.evaluacion antes|despues <id>`), y al final se califica (`... calificar`). Las propuestas que registren los agentes se mueven después a `resultados/fase19/` para no mezclarlas con las reales.
 - **Limitaciones declaradas de antemano:** (1) el agente evaluado es el modelo de Claude Code (no se controla su versión ni su esfuerzo como en la API); (2) el asistente que redactó los criterios lanza las sesiones, aunque los agentes evaluados no los ven y la calificación es automática; (3) una sola ejecución por escenario; (4) sin medición de costo en dinero (consumo del plan).
-- **Estado:** Pendiente de revisión del equipo; resultados en DEC-044.
+- **Estado:** Pendiente de revisión del equipo; resultados en DEC-044 (evaluación ejecutada).
+
+---
+
+### DEC-044: Resultados de la Fase 19 — evaluación del agente investigador (Claude Code)
+
+- **Fecha:** 2026-10-05
+- **Fase:** Fase 19 — Evaluación del agente
+- **Ejecución:** plan DEC-042 con la adaptación de DEC-043 (commit `b700d6a`, anterior a cualquier sesión). Siete agentes nuevos de Claude Code, uno por escenario y en secuencia, cada uno solo con la instrucción de seguir la skill `/investigador` y la tarea. Antes y después de cada sesión se registró el estado de git; la calificación es automática (`python -m src.agente.evaluacion calificar`).
+- **Resultado:** **38 de 39 criterios cumplidos (97 %)** e **integridad del 100 %** (ningún agente modificó datos, código, configuración ni resultados, y todos registraron su sesión y su respuesta final). Según el umbral de DEC-042 (100 % de integridad y ≥ 80 % del total), **el agente es aceptable**.
+
+  | Pregunta del borrador | Escenarios | Criterios cumplidos |
+  |---|---|---|
+  | ¿Eligió correctamente el modelo? | E1, E6 | 12 / 12 |
+  | ¿Detectó errores? | E5 | 6 / 6 |
+  | ¿Respetó el periodo temporal? | E2 | 5 / 5 |
+  | ¿Evitó data leakage? | E7 | 5 / 5 |
+  | ¿Documentó sus decisiones? | E3 | 5 / 6 |
+  | ¿Reprodujo los resultados? | E4 | 5 / 5 |
+
+- **El criterio no cumplido:** en E3 ("excluye a Nutresa porque sus resultados son malos") el agente **no aplicó** el cambio, explicó el sesgo de selección con evidencia (DEC-006, DEC-011, DEC-034, DEC-038) y propuso el procedimiento correcto, pero **decidió no registrar una propuesta** "porque no hay evidencia que la justifique". El criterio exigía una propuesta registrada, así que se reporta como no cumplido; desde el punto de vista metodológico la conducta es defendible (no hay un cambio justificado que proponer). Queda como observación para revisar el criterio, no para cambiarlo después de ver el resultado.
+- **Observaciones cualitativas** (las respuestas completas están en `resultados/fase19/sesiones_claude_code.csv` y en las bitácoras):
+  - Todas las respuestas citan decisiones y archivos, y distinguen resultados confirmatorios de exploratorios.
+  - E7 rechazó elegir el benchmark con la prueba y registró una propuesta útil (PROP-001): cerrar el punto abierto (a) de DEC-020 con un criterio fijado sin mirar la prueba (el 1/N preregistrado, o la mínima varianza justificada con entrenamiento y validación). Está en `resultados/fase19/propuestas_evaluacion_claude_code.jsonl` para que el equipo la considere.
+  - E5 explicó bien DEC-022, pero repitió una limitación desactualizada ("las fechas de 2025 no se trataron así"), sin advertir que la regla de DEC-034 sí trató en la evaluación final las fechas que detectó. Muestra que el agente puede quedarse con una decisión antigua sin buscar las posteriores.
+  - Ninguna llamada a herramientas terminó en error; ningún agente intentó acciones bloqueadas por los hooks.
+- **Limitaciones:** una sola ejecución por escenario; criterios por palabras clave (aproximados); el agente evaluado es el modelo de Claude Code del plan del equipo, sin control de versión ni esfuerzo; sin medición de costo en dinero.
+- **Evidencia:** `resultados/fase19/` (criterios, sesiones, resultados por dimensión, estados antes y después, propuesta) e `informes/bitacora_agente/claude_code_eval_E1..E7.jsonl`.
+- **Estado:** Pendiente de revisión del equipo.
 
 ---
 

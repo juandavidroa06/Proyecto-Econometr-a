@@ -1,0 +1,7 @@
+dimension,cumplidos,total,tasa
+Detectó errores,6,6,1.0
+Documentó sus decisiones,5,6,0.8333333333333334
+Eligió correctamente el modelo,12,12,1.0
+Evitó data leakage,5,5,1.0
+Reprodujo los resultados,5,5,1.0
+Respetó el periodo temporal,5,5,1.0
