@@ -65,3 +65,52 @@ def rendimientos_saltando_invalidos(precios, bandera):
         abarca[col] = siguiente
     a_df = lambda d: pd.DataFrame(d, index=precios.index)[list(precios.columns)]
     return a_df(simples), a_df(logs), a_df(abarca)
+
+
+# =============================================================================
+# Regla mecánica para fechas sospechosas del bloque de prueba (DEC-034)
+# =============================================================================
+
+def detectar_reversiones_simultaneas(rend_log, umbral=0.05, tolerancia=0.25, min_acciones=2):
+    """Días en que ``min_acciones`` o más acciones tienen un salto |r_t| >= umbral
+    que se revierte al día siguiente (signo contrario y |r_t + r_{t+1}| <=
+    tolerancia * |r_t|). Es el barrido de DEC-022 convertido en regla.
+
+    Retorna DataFrame (fecha, n_acciones, acciones) ordenado por fecha.
+    """
+    if not isinstance(rend_log, pd.DataFrame):
+        raise TypeError("Se esperaba un DataFrame de rendimientos log.")
+    eventos = {}
+    for col in rend_log.columns:
+        s = rend_log[col].dropna()
+        v = s.to_numpy()
+        for i in range(len(v) - 1):
+            if (abs(v[i]) >= umbral and np.sign(v[i + 1]) == -np.sign(v[i])
+                    and abs(v[i] + v[i + 1]) <= tolerancia * abs(v[i])):
+                eventos.setdefault(s.index[i], []).append(col)
+    filas = [{"fecha": f, "n_acciones": len(a), "acciones": ", ".join(sorted(a))}
+             for f, a in sorted(eventos.items()) if len(a) >= min_acciones]
+    return pd.DataFrame(filas, columns=["fecha", "n_acciones", "acciones"])
+
+
+def invalidar_fechas_rendimientos(rend_log, volumen, fechas):
+    """Aplica DEC-022 a ``fechas`` sobre rendimientos log ya calculados.
+
+    Para TODAS las columnas: r(fecha) pasa a NaN y el siguiente día del
+    índice recibe r(fecha) + r(siguiente) (rendimiento de dos días; equivale
+    a anular el precio de esa fecha). El volumen de la fecha queda NaN.
+    No inventa valores. Retorna (rend_log, volumen) nuevos.
+    """
+    r = rend_log.copy()
+    v = volumen.copy()
+    for fecha in pd.DatetimeIndex(fechas):
+        if fecha not in r.index:
+            raise ValueError(f"La fecha {fecha.date()} no está en los rendimientos.")
+        pos = r.index.get_loc(fecha)
+        if pos + 1 < len(r.index):
+            siguiente = r.index[pos + 1]
+            r.loc[siguiente] = r.loc[fecha] + r.loc[siguiente]
+        r.loc[fecha] = np.nan
+        if fecha in v.index:
+            v.loc[fecha] = np.nan
+    return r, v

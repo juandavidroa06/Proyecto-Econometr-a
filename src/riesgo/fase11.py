@@ -53,8 +53,12 @@ def construir_series():
     return series
 
 
-def ejecutar_fase11(guardar=True):
-    series = construir_series()
+def evaluar_riesgo(series):
+    """Núcleo de la Fase 11 (lo usan la Fase 11 y la evaluación final).
+
+    ``series``: dict {nombre: (historia, evaluacion)} de rendimientos simples.
+    Retorna dict con resumen, mcs y pronosticos.
+    """
     pron, filas = [], []
     for nombre, (train, valid) in series.items():
         for nivel, alfa in NIVELES.items():
@@ -111,7 +115,13 @@ def ejecutar_fase11(guardar=True):
         mcs.append(t)
     mcs = pd.concat(mcs, ignore_index=True)
 
-    res = {"resumen": resumen, "mcs": mcs, "pronosticos": pronosticos}
+    return {"resumen": resumen, "mcs": mcs, "pronosticos": pronosticos}
+
+
+def ejecutar_fase11(guardar=True):
+    series = construir_series()
+    res = evaluar_riesgo(series)
+    resumen, mcs, pronosticos = res["resumen"], res["mcs"], res["pronosticos"]
     if guardar:
         RUTA_RESULTADOS.mkdir(parents=True, exist_ok=True)
         resumen.to_csv(RUTA_RESULTADOS / "fase11_backtesting.csv", index=False)

@@ -133,15 +133,16 @@ def mlp(train, valid, columnas, empresas):
 
 # --- Referencias diarias agregadas a la semana -------------------------------------
 
-def referencias_diarias(rend_log, valid):
+def referencias_diarias(rend_log, valid, fin_historia=FECHA_FIN_TRAIN):
     """EWMA y GARCH-t: varianza de la semana objetivo (en %^2) pronosticada al
-    cierre de la semana anterior, para las filas de ``valid``."""
+    cierre de la semana anterior, para las filas de ``valid``. Los parámetros
+    usan solo datos hasta ``fin_historia``."""
     ewma = pd.Series(np.nan, index=valid.index)
     garch_pred = pd.Series(np.nan, index=valid.index)
     for e, g in valid.groupby("empresa"):
         serie = rend_log[e].dropna()
-        tr = serie[serie.index <= pd.Timestamp(FECHA_FIN_TRAIN)]
-        va = serie[serie.index > pd.Timestamp(FECHA_FIN_TRAIN)]
+        tr = serie[serie.index <= pd.Timestamp(fin_historia)]
+        va = serie[serie.index > pd.Timestamp(fin_historia)]
         completa = pd.concat([tr, va])
         pos = {d: i for i, d in enumerate(completa.index)}
         h_ewma = garch.varianza_ewma(tr, va, 0.94)        # h de cada día de validación

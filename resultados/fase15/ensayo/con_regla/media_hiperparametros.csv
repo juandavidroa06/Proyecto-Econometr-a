@@ -1,0 +1,14 @@
+modelo,max_depth,min_samples_leaf,max_features,learning_rate,p,q,ocultas,decaimiento,oculta
+random_forest,6,50,0.3,,,,,,
+gradient_boosting,2,50,,0.02,,,,,
+arima Celsia,,,,,2,0,,,
+arima Banco de Bogota,,,,,0,0,,,
+arima Ecopetrol,,,,,1,0,,,
+arima ETB,,,,,0,3,,,
+arima Nutresa,,,,,0,0,,,
+arima Banco Davivienda PF,,,,,0,0,,,
+arima Promigas,,,,,0,1,,,
+arima Mineros SA,,,,,1,0,,,
+arima Grupo Bolivar,,,,,0,0,,,
+mlp,,,,,,,"(64, 32)",0.0001,
+lstm,,,,,,,,0.0001,32

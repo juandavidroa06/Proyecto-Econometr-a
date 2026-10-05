@@ -82,24 +82,21 @@ def tasa_diaria(tasas, indice):
     return alineada
 
 
-def ejecutar_fase14(guardar=True):
-    rend_log = cargar_entrenamiento_validacion(RUTA_PARTICIONES, "rendimientos_log")
-    tasas = cargar_entrenamiento_validacion(RUTA_PARTICIONES, "tasas")
-    rend = log_a_simple(pd.concat([rend_log["train"], rend_log["validacion"]]))
-    # La tasa solo se necesita desde el primer rebalanceo (el IBR de la
-    # muestra empieza el 2020-01-02, después del primer día bursátil).
-    rf = tasa_diaria(pd.concat([tasas["train"], tasas["validacion"]]),
-                     rend.index[rend.index >= pd.Timestamp(INICIO_PRIMER_REBALANCEO)])
-    liquidos, _, _ = seleccionar_universo_liquido(rend_log["train"])
-    universos = {"9_empresas": (list(rend.columns), LIMITE_SECTOR), "liquidas": (liquidos, None)}
+def correr_backtesting(rend, rf, universos, inicio, fin, periodos):
+    """Núcleo del backtesting de DEC-032 (lo usan la Fase 14 y la evaluación final).
 
+    ``rend``: rendimientos simples; ``rf``: tasa diaria; ``universos``:
+    {nombre: (activos, limite_sector)}; rebalanceos desde el último día del
+    mes de ``inicio`` hasta ``fin``; ``periodos``: {nombre: (ini, fin)}.
+    Retorna dict con metricas, rotacion, pruebas, pesos y riqueza.
+    """
     filas_met, filas_rot, series, pesos_guardados = [], [], {}, []
     for nombre_u, (activos, limite) in universos.items():
         restr = opt.Restricciones(activos, PESO_MAXIMO_ACTIVO, SECTORES, limite)
-        mensuales = motor.fechas_rebalanceo(rend.index, INICIO_PRIMER_REBALANCEO,
-                                            FECHA_FIN_VALIDACION, "M")
-        trimestrales = motor.fechas_rebalanceo(rend.index, INICIO_PRIMER_REBALANCEO,
-                                               FECHA_FIN_VALIDACION, "Q")
+        mensuales = motor.fechas_rebalanceo(rend.index, inicio,
+                                            fin, "M")
+        trimestrales = motor.fechas_rebalanceo(rend.index, inicio,
+                                               fin, "Q")
         for estrategia in ESTRATEGIAS:
             # Los pesos dependen solo de la ventana: se calculan una vez por fecha.
             objetivos = {}
@@ -113,20 +110,20 @@ def ejecutar_fase14(guardar=True):
                 for nombre_c, c in COSTOS.items():
                     if frecuencia == "trimestral" and nombre_c != COSTO_PRINCIPAL:
                         continue
-                    diario, rot = motor.simular(rend, obj, c, FECHA_FIN_VALIDACION)
+                    diario, rot = motor.simular(rend, obj, c, fin)
                     clave = (nombre_u, estrategia, frecuencia, nombre_c)
                     series[clave] = diario["neto"]
                     filas_rot.append({"universo": nombre_u, "estrategia": estrategia,
                                       "frecuencia": frecuencia, "costo": nombre_c,
                                       "rotacion_media": float(rot.iloc[1:].mean()),
                                       "costo_total": float(diario["costo"].sum())})
-                    for periodo, (ini, fin) in PERIODOS.items():
+                    for periodo, (ini, fin) in periodos.items():
                         neto = diario["neto"].loc[ini:fin]
                         filas_met.append({"universo": nombre_u, "estrategia": estrategia,
                                           "frecuencia": frecuencia, "costo": nombre_c,
                                           "periodo": periodo, **motor.metricas(neto, rf)})
         # Referencia: invertir al IBR.
-        for periodo, (ini, fin) in PERIODOS.items():
+        for periodo, (ini, fin) in periodos.items():
             neto = rf.loc[ini:fin]
             neto = neto[neto.index > mensuales[0]]
             m = motor.metricas(neto, rf)
@@ -157,6 +154,23 @@ def ejecutar_fase14(guardar=True):
     res = {"metricas": pd.DataFrame(filas_met), "rotacion": pd.DataFrame(filas_rot),
            "pruebas": pruebas, "pesos": pd.DataFrame(pesos_guardados),
            "riqueza": riqueza.rename_axis("Date").reset_index()}
+    return res
+
+
+def ejecutar_fase14(guardar=True):
+    rend_log = cargar_entrenamiento_validacion(RUTA_PARTICIONES, "rendimientos_log")
+    tasas = cargar_entrenamiento_validacion(RUTA_PARTICIONES, "tasas")
+    rend = log_a_simple(pd.concat([rend_log["train"], rend_log["validacion"]]))
+    # La tasa solo se necesita desde el primer rebalanceo (el IBR de la
+    # muestra empieza el 2020-01-02, después del primer día bursátil).
+    rf = tasa_diaria(pd.concat([tasas["train"], tasas["validacion"]]),
+                     rend.index[rend.index >= pd.Timestamp(INICIO_PRIMER_REBALANCEO)])
+    liquidos, _, _ = seleccionar_universo_liquido(rend_log["train"])
+    universos = {"9_empresas": (list(rend.columns), LIMITE_SECTOR), "liquidas": (liquidos, None)}
+
+    res = correr_backtesting(rend, rf, universos, INICIO_PRIMER_REBALANCEO,
+                             FECHA_FIN_VALIDACION, PERIODOS)
+    riqueza = res["riqueza"].set_index("Date")
     if guardar:
         RUTA_RESULTADOS.mkdir(parents=True, exist_ok=True)
         for clave in res:
