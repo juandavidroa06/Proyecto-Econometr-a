@@ -575,11 +575,12 @@ Cada decisión se registra con el siguiente formato:
 
 ---
 
-### DEC-034: BORRADOR del plan de la Fase 15 — evaluación final en el bloque de prueba
+### DEC-034: Plan APROBADO de la Fase 15 — evaluación final en el bloque de prueba
 
 - **Fecha:** 2026-10-05
 - **Fase:** Fase 15 — Comparación final
-- **Estado:** **BORRADOR. Requiere aprobación explícita del equipo antes de ejecutar. NO abrir el bloque de prueba hasta entonces.** El bloque de prueba (2025-01-02 a 2026-09-14, 426 días) se abre **una sola vez**: después no se puede cambiar el plan sin invalidar la evaluación. Los puntos marcados con **[DECIDIR]** necesitan respuesta del equipo.
+- **Estado:** **APROBADO el 2026-10-05** por el equipo y el profesor, tras leer el borrador, con estas decisiones: (1) **se aplica la regla mecánica para fechas sospechosas de 2025** (sección 2, propuesta); (2) **Opción A** para la estimación de los modelos (sección 3). Esta aprobación se commitea antes de escribir el código de la evaluación final y antes de abrir la prueba. El bloque de prueba (2025-01-02 a 2026-09-14, 426 días) se abre **una sola vez**.
+- **Precisión de implementación (fijada antes de abrir la prueba):** "se tratan como DEC-022" se aplica literalmente: en cada día detectado, el rendimiento de **las 9 acciones** queda NaN y el del día bursátil siguiente pasa a ser el de dos días (equivale a anular el precio de ese día); el volumen de ese día también queda NaN. El detector usa rendimientos log del bloque de prueba con los umbrales del barrido de DEC-022 (|r_t| ≥ 5 %, signo contrario al día siguiente y |r_t + r_{t+1}| ≤ 0,25·|r_t|, en 2 o más acciones el mismo día). En la Opción A, los portafolios de la Fase 6 que entran en la familia de riesgo (H15-4) también se reestiman con 2020–2024 con su procedimiento original.
 
 **1. Principios**
 - Todo lo que se evalúa, cómo y con qué prueba queda fijado aquí antes de abrir la prueba; los resultados se reportan completos, favorables o no.
@@ -589,10 +590,10 @@ Cada decisión se registra con el siguiente formato:
 
 **2. Datos del bloque de prueba**
 - Mismo preprocesamiento: imputación de Kalman ya aplicada (Grupo Bolívar, 2026-03-10, DEC-012/013) y precios inválidos de la fuente (DEC-022).
-- **[DECIDIR] Regla para fechas sospechosas de 2025** (pendiente de DEC-022). DEC-018 ya vio dos fechas (2025-02-19 y 2025-09-30), por lo que la regla no puede ajustarse a ellas. Propuesta: aplicar mecánicamente el detector usado en entrenamiento y validación (días con **2 o más acciones** con salto ≥ 5 % revertido al día siguiente); los días detectados se tratan como DEC-022 (NaN y rendimiento de dos días) en el **análisis principal**, y se reporta un **análisis de sensibilidad sin tratamiento**. Alternativa: no tratar nada y reportar la sensibilidad con el tratamiento.
+- **Regla para fechas sospechosas de 2025 (APROBADA)** (pendiente de DEC-022). DEC-018 ya vio dos fechas (2025-02-19 y 2025-09-30), por lo que la regla no puede ajustarse a ellas. Propuesta: aplicar mecánicamente el detector usado en entrenamiento y validación (días con **2 o más acciones** con salto ≥ 5 % revertido al día siguiente); los días detectados se tratan como DEC-022 (NaN y rendimiento de dos días) en el **análisis principal**, y se reporta un **análisis de sensibilidad sin tratamiento**. Alternativa: no tratar nada y reportar la sensibilidad con el tratamiento.
 
 **3. Estimación de los modelos para la prueba**
-- **[DECIDIR] Opción A (propuesta):** se reestima cada modelo con **entrenamiento + validación (2020–2024)** usando **el mismo procedimiento de selección ya congelado** (BIC para ARIMA; las mismas rejillas y validación cruzada temporal para RF y GB; parada temprana con el último 20 % para MLP y LSTM; mismas semillas). Los pronósticos sobre la prueba son a un paso con parámetros fijos. Opción B: usar los modelos estimados solo con entrenamiento, tal cual se evaluaron en validación.
+- **Opción A (APROBADA):** se reestima cada modelo con **entrenamiento + validación (2020–2024)** usando **el mismo procedimiento de selección ya congelado** (BIC para ARIMA; las mismas rejillas y validación cruzada temporal para RF y GB; parada temprana con el último 20 % para MLP y LSTM; mismas semillas). Los pronósticos sobre la prueba son a un paso con parámetros fijos. Opción B: usar los modelos estimados solo con entrenamiento, tal cual se evaluaron en validación.
 - El universo líquido sigue siendo el fijado con entrenamiento (Celsia, Banco de Bogotá, Ecopetrol, Davivienda PF).
 
 **4. Pruebas confirmatorias (cada familia con Holm al 5 %)**
