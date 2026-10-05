@@ -1,6 +1,6 @@
 familia,comparado_con,max_dif,tolerancia,reproduce
 H15-1,fase10_media.csv,1.7907897387203775e-13,1e-09,True
 H15-2,fase10_varianza_mcs.csv,5.10702591327572e-15,1e-09,True
-H15-3,semanal_volatilidad.csv,0.0,1e-09,True
+H15-3,semanal_volatilidad.csv,5.684341886080802e-14,1e-09,True
 H15-4,fase11_backtesting.csv,6.865633356278877e-07,1e-06,True
 H15-5,"fase14_riqueza.csv (2024, desde el 2.º día)",4.440892098500626e-16,1e-10,True
