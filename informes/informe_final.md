@@ -2,7 +2,7 @@
 
 **Autores:** Gabriel Aldana, Harold Fúneme, Laura Rodríguez, Juan Roa
 
-**Institución:** [Institución]
+**Institución:** Universidad Santo Tomás
 
 **Fecha:** octubre de 2026
 
@@ -365,7 +365,7 @@ Los análisis de la Fase 17 (DEC-040, `docs/interpretacion_economica.md`) ayudan
 - **Por qué el último rendimiento parece importante pero no predice.** Las acciones menos líquidas tienen autocorrelación negativa de primer orden (ETB −0,28; Promigas −0,19), coherente con un rebote de microestructura (Roll, 1984). No es una oportunidad explotable con costos.
 - **Petróleo.** Ecopetrol se correlaciona con el Brent del mismo día (0,51 en entrenamiento) y casi nada con el del día anterior (0,07). La información se incorpora el mismo día, y por eso el Brent rezagado no predice.
 - **Falsa diversificación de las ilíquidas: no confirmada.** La beta de Dimson supera a la beta simple en 8 de 9 acciones, pero su relación con la iliquidez no es significativa (p = 0,64).
-- **Contexto.** El IBR pasó de 1,6 % (marzo de 2021) a 12,4 % (mayo de 2023). El 1/N rindió −4,0 % anual en 2021–2023 y +29,6 %, +55,8 % y +39,9 % en 2024, 2025 y 2026. La relación entre el ciclo de tasas y el desempeño de la renta variable se presenta como hipótesis [requiere respaldo con fuentes].
+- **Contexto.** El IBR pasó de 1,6 % (marzo de 2021) a 12,4 % (mayo de 2023). El 1/N rindió −4,0 % anual en 2021–2023 y +29,6 %, +55,8 % y +39,9 % en 2024, 2025 y 2026. Estas cifras describen el periodo; el proyecto no evaluó qué factores explican esos cambios.
 
 ![Interpretación económica (Fase 17).](../resultados/graficos/fase17_interpretacion.png)
 
