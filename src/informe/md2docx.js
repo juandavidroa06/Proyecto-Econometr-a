@@ -11,7 +11,27 @@ const {
 
 const [entrada, salida] = process.argv.slice(2);
 const base = path.dirname(path.resolve(entrada));
-const lineas = fs.readFileSync(entrada, "utf8").replace(/\r/g, "").split("\n");
+// Une las líneas cortadas a mano: un párrafo (o un elemento de lista o de cita) que sigue en la
+// línea siguiente forma un solo párrafo, como en Markdown.
+const MARCA = /^(#|\||!\[|-\s|\d+\.\s|---$)/;
+const lineas = [];
+for (const l of fs.readFileSync(entrada, "utf8").replace(/\r/g, "").split("\n")) {
+  const previa = lineas[lineas.length - 1];
+  if (previa !== undefined && previa.trim() && l.trim()) {
+    const enCita = l.startsWith(">") && previa.startsWith(">");
+    const c = l.replace(/^> ?/, "");
+    const pc = previa.replace(/^> ?/, "");
+    if (enCita && pc.trim() && c.trim() && !MARCA.test(c.trim())) {
+      lineas[lineas.length - 1] = previa + " " + c.trim();
+      continue;
+    }
+    if (!l.startsWith(">") && !previa.startsWith(">") && !/^(#|\||!\[)/.test(previa.trim()) && !MARCA.test(l.trim())) {
+      lineas[lineas.length - 1] = previa + " " + l.trim();
+      continue;
+    }
+  }
+  lineas.push(l);
+}
 
 const ANCHO = 9070; // A4 con márgenes de 2,5 cm, en DXA
 const FUENTE = "Calibri";
@@ -78,6 +98,26 @@ for (let i = 0; i < lineas.length; i++) {
   const l = lineas[i];
   if (!l.trim()) continue;
 
+  if (l.trim() === "---") continue;
+  if (l.startsWith(">")) {
+    // Cita: bloque sombreado; verde si es un bloque de teoría, azul si es texto para leer en voz alta.
+    const bloque = [];
+    while (i < lineas.length && lineas[i].startsWith(">")) bloque.push(lineas[i++].replace(/^> ?/, ""));
+    i--;
+    const teoria = (bloque.find((x) => x.trim()) || "").startsWith("**Teoría");
+    const fondo = { type: ShadingType.CLEAR, color: "auto", fill: teoria ? "E7F0E3" : "EDF1F8" };
+    for (const b of bloque) {
+      if (!b.trim()) continue;
+      const v = b.match(/^(\s*)- (.*)$/);
+      const n = b.match(/^(\d+)\. (.*)$/);
+      const sangria = v ? 567 + 340 * Math.floor(v[1].length / 2) : n ? 567 : 284;
+      const hijos = v ? [new TextRun("•  "), ...inline(v[2])] : n ? [new TextRun(`${n[1]}. `), ...inline(n[2])] : inline(b);
+      destino.push(new Paragraph({ shading: fondo, indent: { left: sangria, right: 284, hanging: v || n ? 227 : 0 },
+        spacing: { before: 0, after: 60 }, children: hijos }));
+    }
+    destino.push(new Paragraph({ spacing: { after: 120 }, children: [] }));
+    continue;
+  }
   if (l.startsWith("# ") && !tituloHecho) {
     tituloHecho = true;
     portada.push(new Paragraph({ spacing: { before: 2400, after: 600 }, alignment: AlignmentType.CENTER,
