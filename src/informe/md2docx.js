@@ -1,5 +1,6 @@
 // Convierte informes/informe_final.md (subconjunto de Markdown) en un .docx con formato académico.
 // Uso: node md2docx.js <entrada.md> <salida.docx>
+// El índice queda como campo vacío; actualizar_indice.ps1 lo rellena con Word y guarda el archivo.
 const fs = require("fs");
 const path = require("path");
 const {
@@ -94,7 +95,9 @@ for (let i = 0; i < lineas.length; i++) {
       destino = cuerpo;
     } else if (titulo === "1. Introducción") {
       cuerpo.push(new Paragraph({ children: [new PageBreak()] }));
-      cuerpo.push(new Paragraph({ heading: HeadingLevel.HEADING_1, children: [new TextRun("Contenido")] }));
+      // Título con formato de encabezado pero sin nivel de esquema, para que no aparezca en el propio índice.
+      cuerpo.push(new Paragraph({ spacing: { before: 360, after: 160 },
+        children: [new TextRun({ text: "Contenido", bold: true, size: 30, color: AZUL })] }));
       cuerpo.push(new TableOfContents("Contenido", { hyperlink: true, headingStyleRange: "1-2" }));
       cuerpo.push(new Paragraph({ children: [new PageBreak()] }));
     }
@@ -152,7 +155,6 @@ portada.push(new Paragraph({ children: [new PageBreak()] }));
 const doc = new Document({
   creator: "Gabriel Aldana, Harold Fúneme, Laura Rodríguez, Juan Roa",
   title: "Informe final — Portafolio Colombiano",
-  features: { updateFields: true },
   styles: {
     default: { document: { run: { font: FUENTE, size: 22 }, paragraph: { spacing: { line: 276 } } } },
     paragraphStyles: [
