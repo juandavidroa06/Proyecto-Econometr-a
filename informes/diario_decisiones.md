@@ -788,4 +788,16 @@ Cada decisión se registra con el siguiente formato:
 
 ---
 
+### DEC-045: Fase 20 — Informe final
+
+- **Fecha:** 2026-10-06
+- **Fase:** Fase 20 — Informe final
+- **Decisión:** el informe final se redacta en `informes/informe_final.md` (fuente versionada, con la estructura de 15 secciones del borrador: introducción, problema, datos, análisis exploratorio, econometría, ML, redes neuronales, riesgo, optimización, backtesting, robustez, comparación, agente de IA, resultados y conclusiones) y se exporta a `informes/informe_final.docx` para entregarlo. Autores: Gabriel Aldana, Harold Fúneme, Laura Rodríguez y Juan Roa; la institución queda como marcador.
+- **Contenido:** no se calculó ningún resultado nuevo. Cada cifra se tomó de los archivos de `resultados/` y de las decisiones del diario (citadas como DEC-xxx en el texto) y se contrastó con ellos al redactar. Los resultados confirmatorios (DEC-036) se separan de los exploratorios (DEC-038) y de los descriptivos (DEC-040); los hallazgos no robustos (volatilidad semanal) y los secundarios (acierto direccional) se presentan con su salvedad. Las afirmaciones de contexto sin fuente quedan marcadas "[requiere respaldo con fuentes]" (pendiente de DEC-040).
+- **Generación del Word:** `node src/informe/md2docx.js informes/informe_final.md informes/informe_final.docx` (requiere el paquete de npm `docx` 9.8.1, que no forma parte del entorno de Python). Incluye portada, índice (Word lo actualiza al abrir), 10 figuras numeradas de `resultados/graficos/` y numeración de páginas. Revisión visual de las 21 páginas tras exportar a PDF.
+- **Pendiente para el equipo:** completar la institución, respaldar con fuentes el contexto marcado y revisar la redacción antes del congreso.
+- **Estado:** Borrador para revisión del equipo.
+
+---
+
 *Las decisiones siguientes se registrarán conforme avance el proyecto.*
