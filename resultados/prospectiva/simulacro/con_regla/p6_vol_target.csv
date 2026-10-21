@@ -1,0 +1,2 @@
+hipotesis,dif_sharpe,ic95_inf,ic95_sup,pvalor,pvalor_unilateral,confirmada_5pct
+"P6: Sharpe neto del volatility targeting > 1/N (9 empresas, 20 pb)",0.03254085096426773,-0.16567592556338614,0.26087977757345754,0.781,0.3905,False

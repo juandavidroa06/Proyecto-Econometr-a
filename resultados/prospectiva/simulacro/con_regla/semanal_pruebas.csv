@@ -1,0 +1,6 @@
+familia,modelo,referencia,dm_estadistico,dm_pvalor,n,pvalor_holm,significativa_5pct
+H1: retador vs HAR,random_forest,har,-2.060764360442067,0.04987389872646807,26,0.09974779745293615,False
+H1: retador vs HAR,gradient_boosting,har,-2.9794627774112867,0.006343245724303715,26,0.019029737172911145,True
+H1: retador vs HAR,mlp,har,-0.27802378962003177,0.7832805525383261,26,0.7832805525383261,False
+secundaria: HAR vs referencia,har,ewma,0.3041513994696672,0.7635298100537672,26,0.7635298100537672,False
+secundaria: HAR vs referencia,har,garch,-1.29754654715073,0.2062890728127537,26,0.4125781456255074,False

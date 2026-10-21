@@ -1,0 +1,2 @@
+hipotesis,acierto,estadistico,pvalor,n,fechas,confirmada_5pct
+"P5: acierto direccional de la LSTM > azar (HAC, unilateral)",0.5302325581395348,0.9388949503420663,0.1738923410454779,430,79,False

@@ -1,0 +1,4 @@
+universo,modelo,perdida_media,pvalor_mcs,en_mcs
+liquidas,ewma,1.9833512523409733,1.0,True
+liquidas,garch,2.0141619176549517,0.4755,True
+liquidas,constante,2.1106279391870366,0.0055,False

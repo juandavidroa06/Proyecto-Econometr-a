@@ -1,0 +1,37 @@
+{
+  "ejecutado": "2026-10-21T02:17:14",
+  "historia": [
+    "2020-01-01",
+    "2024-12-31"
+  ],
+  "evaluacion": [
+    "2025-01-02",
+    "2025-06-30"
+  ],
+  "dias_evaluacion": 126,
+  "fechas_detectadas": [],
+  "huellas": {
+    "con_regla/media.csv": "8e8c350c0416d564602c6d8fa0fdcccd1997627c9106a54950e7fdc83d6fbc77",
+    "con_regla/media_filas.csv": "e9b31c352043d9cc0373461681b44a8cbfe90469baca34167509e6bd3fcedad1",
+    "con_regla/media_hiperparametros.csv": "95d039e0b4082495e13cbaadb4066fe2d05c13cf620f459699b210902826e624",
+    "con_regla/media_por_empresa.csv": "7a1d0745ab3058bf272072acd9d71eabd03065437670bd03d9cdae88e9000875",
+    "con_regla/media_pronosticos.csv": "dbe0954ec4e6dbbf539b5eb939a68d9f61b7ca8cdcbf396bceb46d169fcaa956",
+    "con_regla/p5_direccion_lstm.csv": "dcca8a4758c11ad4d06f9dc0e00263655cd94bb459b7285acc6e3001e7d72123",
+    "con_regla/p6_metricas.csv": "72100ccbf83dd8fdbac06d034720f122291c8a67f1ffcb5e7ed9f4de865035bb",
+    "con_regla/p6_vol_target.csv": "e2bfd70d3a807e4044f7bd417cb1858c735d3b918a614823b8331c8f6612c349",
+    "con_regla/portafolios_metricas.csv": "04a34f159ea5466172709e2881b3b93f4adea9949cf3fa1ddd0db79d064f8b6b",
+    "con_regla/portafolios_pruebas.csv": "24c862b2a7550685dd266698ccea88b137c924e3c75e2c522ddb5f3fef59c8b1",
+    "con_regla/portafolios_riqueza.csv": "a4a97af742548b716001b8a7df7e6ffe93965aa14654c597e93b7c147e83aa9b",
+    "con_regla/portafolios_rotacion.csv": "35d49527b14857d35dc65bb13bb4db8efec6b157709bc83506ae76d2e4ba8acf",
+    "con_regla/riesgo_backtesting.csv": "465f574a07685eb694527a22d809120b8864880560ec7531aee2fe7801eb2250",
+    "con_regla/riesgo_mcs.csv": "d8aec590538d4320da472fe15545398a330462d78f134aa1e3037d57072afe54",
+    "con_regla/semanal_filas.csv": "ea6ebeaa002ec7422f646a6157dd575345c13154c65aa68f32f6a953c89867f9",
+    "con_regla/semanal_por_empresa.csv": "470124bd1e2aee3afa43d564c150896fcaa71086043156094f7a066cdb1a6534",
+    "con_regla/semanal_pruebas.csv": "9d848b9ffd92145405f1411ad94f8fa0ca9c2320ba2dcefa6e1c7255d9a9580f",
+    "con_regla/semanal_volatilidad.csv": "e5b17b0bf7647189f5a43a4847c2497ef00675b401115c0e3792b6e0e0ae3aaf",
+    "con_regla/varianza_mcs.csv": "cd7561844289da57f515eba1529f54c5cf084ebb5009115a8fc28366aa75b78d",
+    "con_regla/varianza_por_empresa.csv": "456611b54392dc802ce5788daacc0263a2952c3bc2e3427a795963f119b87a3e",
+    "con_regla/varianza_pronosticos.csv": "ab613c68c8d774c703d160d55975122739d7bd842369dbf360dd523d74e85186",
+    "fechas_detectadas.csv": "9527222aebf7d8112c3ff92eed085dec035a18ea549cca9c8cd70c81a7c1f39e"
+  }
+}
