@@ -44,17 +44,19 @@ código y en `informes/diario_decisiones.md`):
 
 ## Tecnologías
 
-| Categoría | Herramientas probables |
+Versiones exactas en `requirements.txt` (entorno verificado: Python 3.14).
+
+| Categoría | Herramientas |
 |---|---|
-| Lenguaje | Python 3.10+ |
 | Datos | pandas, numpy, yfinance |
-| Estadística | scipy, statsmodels |
+| Estadística y econometría | scipy, statsmodels (Kalman, ARIMA, pruebas), arch (GARCH) |
+| Machine learning | scikit-learn (Random Forest, Gradient Boosting, Ledoit-Wolf) |
+| Redes neuronales | PyTorch (MLP, LSTM; CPU) |
+| Optimización | scipy (SLSQP, HiGHS para mínimo CVaR) |
 | Visualización | matplotlib, seaborn |
-| Econometría | statsmodels, arch 8.0.0 |
-| Machine Learning | scikit-learn 1.9.1 |
-| Redes neuronales | PyTorch 2.14.1 (CPU) |
-| Control de versiones | Git |
-| Notebooks | Jupyter |
+| Agente de IA | Claude Code (skill `/investigador`, hook, servidor MCP con `mcp`); SDK `anthropic` para la versión por API |
+| Pruebas | pytest (246 tests) |
+| Informe | Node.js + paquete `docx` (Word) |
 
 ## Estructura del proyecto
 
@@ -81,12 +83,17 @@ código y en `informes/diario_decisiones.md`):
 │   ├── informe/           # Gráficos de resultados ya congelados
 │   ├── robustez/          # Análisis de robustez exploratorio (Fase 16)
 │   ├── interpretacion/    # Interpretación económica (Fase 17)
-│   ├── agente/            # Agente de IA y su evaluación (Fases 18–19)
-│   └── evaluacion_final.py  # Fase 15: único módulo que abre el bloque de prueba
+│   ├── agente/            # Agente de IA: herramientas, CLI, servidor MCP y evaluaciones (Fases 18, 19 y 21)
+│   ├── extensiones/       # Inferencia adicional y portafolios con pronósticos (Fase 21)
+│   ├── evaluacion_final.py  # Fase 15: único módulo que abre el bloque de prueba
+│   ├── prospectiva.py     # Prueba prospectiva con datos posteriores a 2026-09-14 (DEC-048)
+│   └── reproducir.py      # Reejecuta las fases y compara con los resultados publicados
 ├── modelos/           # Modelos entrenados (fases posteriores)
 ├── resultados/        # Métricas, reportes y gráficos
 │   └── graficos/      # Gráficos del análisis exploratorio
-├── informes/          # Diario de decisiones metodológicas
+├── informes/          # Diario de decisiones, informe final, guion y bitácoras del agente
+├── .claude/           # Skill /investigador, hook de protección y su configuración
+├── .mcp.json          # Servidor MCP del agente para Claude Code
 ├── tests/             # Pruebas unitarias (pytest)
 ├── config/            # Configuración y parámetros
 └── docs/              # Documentación académica
@@ -152,8 +159,13 @@ python -m src.pipeline
 # 3. Ejecutar las pruebas
 python -m pytest tests -v
 
-# 4. Agente de IA (requiere credenciales de Anthropic en el entorno; nunca en el código)
-#    set ANTHROPIC_API_KEY=...            (Windows)   |   export ANTHROPIC_API_KEY=...   (Linux/macOS)
+# 3b. Reejecutar las fases y comparar con los resultados publicados (no deja cambios)
+python -m src.reproducir            # todas (incluye las redes: tarda)
+python -m src.reproducir --rapido   # sin las fases lentas (9, 16 y 21)
+
+# 4. Agente de IA dentro de Claude Code: abrir el proyecto y escribir
+#    /investigador ¿Qué modelo de volatilidad recomiendan los resultados?
+#    Versión por API (requiere credenciales de Anthropic en el entorno; nunca en el código):
 python -m src.agente "¿Qué modelo de volatilidad recomiendan los resultados?"
 
 # 5. Abrir el notebook de exploración
@@ -162,7 +174,7 @@ jupyter notebook notebooks/01_exploracion.ipynb
 
 ## Nota importante
 
-Este proyecto está en fase de desarrollo. Los resultados, conclusiones y métodos aquí documentados son preliminares y están sujetos a revisión.
+Las decisiones del diario marcadas como "pendientes de revisión" esperan la aprobación del equipo. Los resultados de la Fase 15 son la evaluación confirmatoria (se ejecutó una sola vez); lo calculado después sobre el bloque de prueba es exploratorio. La siguiente evaluación confirmatoria es la prueba prospectiva (DEC-048).
 
 ---
 

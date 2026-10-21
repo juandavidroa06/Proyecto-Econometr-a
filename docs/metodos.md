@@ -1,299 +1,143 @@
-# Metodología del Proyecto
+# Metodología del proyecto
 
-> **Estado:** En progreso — Las etapas 1 a 5 (adquisición, validación, limpieza,
-> exploración y estadística descriptiva) y la **Fase 3.5** (auditoría, buenas
-> prácticas e imputación con Filtro de Kalman) ya han sido ejecutadas. Las etapas
-> 6 en adelante (econometría, ML, redes, riesgo, optimización, backtesting,
-> robustez y agente) están planificadas pero aún no se han ejecutado.
-> **Última actualización:** Septiembre 2026
-
-Este documento describe la metodología que seguiremos para construir y evaluar un portafolio de acciones colombianas. Cada sección representa una fase del proyecto que se implementará de manera progresiva.
+> **Estado:** ejecutada (Fases 0 a 21). Este documento describe **qué se hizo y cómo**, con
+> las fórmulas principales. Las razones de cada elección, las alternativas descartadas y los
+> resultados están en `informes/diario_decisiones.md` (citado como DEC-xxx); el resumen de
+> resultados está en `informes/informe_final.md`.
+> **Última actualización:** octubre de 2026
 
 ---
 
-## 1. Selección de activos
+## 0. Principios de evaluación (aplican a todo)
 
-**Objetivo:** Definir qué empresas de la BVC incluiremos en el análisis.
+- **Partición temporal congelada** (DEC-017, DEC-019, DEC-021): entrenamiento 2020-01-02 a
+  2023-12-29, validación 2024, prueba 2025-01-02 a 2026-09-14. Los estimadores se ajustan con
+  entrenamiento; la validación sirve para comparar y elegir; la prueba se abrió **una sola vez**
+  (Fase 15, plan DEC-034). Lo calculado después sobre la prueba es exploratorio.
+- **Planes registrados antes de ejecutar** para cada análisis confirmatorio (DEC-029, 032, 034,
+  037, 039, 042, 046, 048, 049): qué se calcula, con qué prueba y con qué criterio.
+- **Pronósticos a un paso** con información hasta t−1; **referencias simples** siempre presentes
+  (media, cero, varianza constante, EWMA, 1/N, IBR).
+- **Dependencia entre acciones:** las pérdidas se promedian por fecha antes de las pruebas
+  agregadas. **Comparaciones múltiples:** corrección de Holm en cada familia.
 
-**Criterios de selección (propuestos):**
-- Empresas que cotizan de manera continua en la BVC.
-- Liquidez mínima (volumen de negociación suficiente).
-- Horizonte de datos suficiente para el análisis.
-- Diversificación por sectores (si es posible).
+## 1. Datos y calidad (Fases 1–3, DEC-003 a DEC-016, DEC-022, DEC-024)
 
-**Pendiente por definir:**
-- Número mínimo de empresas.
-- Sectores a incluir.
-- Criterios formales de filtrado.
+- Nueve acciones de la BVC en Yahoo Finance (`Adj Close`), TRM y Brent (Yahoo) e IBR overnight
+  del Banco de la República (descarga manual). Crudos inmutables; toda transformación crea
+  archivos nuevos con banderas.
+- Rendimientos: simple R_t = P_t/P_{t−1} − 1 y logarítmico r_t = ln(P_t/P_{t−1}).
+- Valores extremos: se identifican (z-score, percentiles) y no se eliminan (DEC-009).
+- Iliquidez: proporción de rendimientos exactamente cero en entrenamiento; umbral 20 %
+  (5 ilíquidas: ETB, Grupo Bolívar, Promigas, Nutresa, Mineros).
+- Precio inválido de la fuente (2024-05-03): NaN en la capa procesada y rendimiento de dos días
+  el día siguiente, sin imputar (DEC-022). Para la prueba se fijó antes una regla mecánica: días
+  con 2 o más acciones con |r_t| ≥ 5 % revertido al día siguiente (DEC-034).
 
----
+### 1.1 Imputación del único valor faltante (Filtro de Kalman, DEC-012 a DEC-016)
 
-## 2. Obtención de datos
-
-**Objetivo:** Descargar series de precios históricos de las empresas seleccionadas.
-
-**Fuentes consideradas:**
-- Yahoo Finance (vía `yfinance`)
-- Datos descargados manualmente de la BVC
-- Otras APIs financieras
-
-**Variables a obtener:**
-- Precio de apertura, cierre, máximo, mínimo.
-- Volumen negociado.
-- Fechas de negociación.
-
-**Consideraciones:**
-- Verificar que los datos descargados sean consistentes.
-- Registrar la fuente y fecha de descarga para reproducibilidad.
-
----
-
-## 3. Limpieza y calidad de datos
-
-**Objetivo:** Asegurar que los datos sean confiables para el análisis.
-
-**Tareas:**
-- Identificar y tratar datos faltantes.
-- Detectar y justificar el manejo de outliers.
-- Verificar la consistencia temporal (días sin negociación).
-- Eliminar duplicados.
-- Registrar cada transformación aplicada.
-
-**Principios:**
-- No eliminar datos sin justificación documentada.
-- Mantener una copia de los datos crudos intacta.
-
----
-
-## 3.5 Imputación de valores faltantes (Filtro de Kalman)
-
-**Objetivo:** Tratar el único valor faltante de precios detectado (Grupo Bolívar,
-`Adj Close` en `2026-03-10`) sin modificar los datos crudos.
-
-### ¿Qué es la imputación?
-
-La imputación es el proceso de estimar un valor que falta en una serie usando un
-modelo estadístico. En este proyecto **solo** se imputa el valor faltante, y
-siempre **quedando marcado** con una bandera para distinguirlo de un valor
-realmente observado.
-
-### ¿Por qué calman?
-
-El **Filtro de Kalman** es un método estándar para series de tiempo que estima el
-estado no observado de un proceso y permite **interpolar** valores faltantes de
-manera estadísticamente fundamentada. Se usa un modelo de **nivel local**:
+Grupo Bolívar, `Adj Close` del 2026-03-10. Modelo de nivel local:
 
 ```
-y_t   = mu_t + eps_t        (ecuación de observación)
-mu_t  = mu_{t-1} + eta_t    (ecuación de transición: camino aleatorio)
+y_t  = mu_t + eps_t         (observación)
+mu_t = mu_{t-1} + eta_t     (transición: camino aleatorio)
 ```
 
-Se implementa con `statsmodels` (ya en el proyecto, sin librerías nuevas).
+estimado con `statsmodels` y **suavizado** (usa información anterior y posterior). El valor
+queda marcado (`es_imputado_kalman`, `retorno_depende_imputacion`). Validación: al ocultar
+valores reales, el error relativo fue de 0,8 % a 1,5 %. Al usar información posterior, la
+imputación es una reconstrucción histórica y **no** puede usarse como información en tiempo real
+(DEC-015).
 
-### ¿Qué variable se imputa?
+## 2. Análisis exploratorio (Fase 4)
 
-Únicamente **`Adj Close`** (precio ajustado), que es la variable usada para
-calcular rendimientos. El resto de columnas OHLCV se conservan intactas.
+Con entrenamiento: Jarque-Bera (normalidad), ADF y KPSS (estacionariedad de precios y
+rendimientos), Ljung-Box sobre r y r² (autocorrelación y efectos ARCH) y ARCH-LM.
 
-### ¿Qué significa "smoothing"?
+## 3. Pronóstico del rendimiento (Fases 7–10)
 
-Al usar **suavizado** (smoothing), se emplea información **anterior y posterior**
-al valor faltante para estimarlo. Esto produce una mejor reconstrucción histórica,
-pero implica que el valor imputado no podría conocerse "en el momento" si solo
-tuviéramos información pasada.
+- **ARIMA(p,0,q)** por acción, p, q ≤ 3, selección por BIC; se ajusta en % por estabilidad
+  numérica (DEC-023).
+- **Random Forest y Gradient Boosting** agrupados (DEC-025): rezagos, medias y volatilidades
+  móviles, días sin cambio, volumen relativo, mercado, TRM y Brent con fecha estrictamente
+  anterior, indicador de empresa; filas asignadas por la fecha del objetivo; hiperparámetros por
+  validación cruzada temporal expansiva de 5 pliegues dentro de entrenamiento.
+- **MLP y LSTM** (PyTorch, DEC-026): escalado con entrenamiento; parada temprana con el último
+  20 % de entrenamiento; 5 semillas promediadas; la LSTM recibe los últimos 30 días.
+- **Comparación** (DEC-027): Diebold-Mariano con corrección de Harvey-Leybourne-Newbold sobre
+  d_t = L_modelo,t − L_ref,t; Model Confidence Set (Hansen, Lunde y Nason, 2011, estadístico
+  T_max, 10 %); R² fuera de muestra R²_OS = 1 − Σ e²_modelo / Σ e²_media con intervalo por
+  bootstrap de bloques; Pesaran-Timmermann para la dirección.
 
-### ¿Por qué no se modifica el dato crudo?
+## 4. Pronóstico de la volatilidad (Fase 7, DEC-029/030)
 
-El archivo `datos/crudos/` es inmutable. La imputación es una transformación que
-se guarda en `datos/procesados/` con columnas/archivos nuevos:
+- **GARCH(1,1)-t:** σ²_t = ω + α ε²_{t−1} + β σ²_{t−1}.
+- **EWMA (RiskMetrics):** σ²_t = λ σ²_{t−1} + (1 − λ) r²_{t−1}, λ = 0,94, sin parámetros
+  estimados.
+- **HAR** (Corsi, 2009) para la varianza realizada semanal, con componentes diario, semanal y
+  mensual; RF, GB y MLP como retadores sobre log RV con corrección de Duan.
+- **Pérdida QLIKE:** L = log h + proxy / h (Patton, 2011), robusta a un proxy ruidoso (r²).
 
-- `es_imputado_kalman`: marca si el precio fue imputado.
-- `retorno_depende_imputacion`: marca si un rendimiento usa un precio imputado.
+## 5. Riesgo: VaR y Expected Shortfall (Fase 11, DEC-028, DEC-031)
 
-### ¿Cómo se valida?
+- Métodos (a un día, 95 % y 99 %): simulación histórica (250 días), normal con σ EWMA,
+  GARCH-t y simulación histórica filtrada (FHS: residuos de entrenamiento × σ EWMA del día).
+- ES empírico robusto a empates: media de las k = ⌈α·n⌉ peores observaciones (DEC-031).
+- Backtesting: Kupiec, Christoffersen, semáforo de Basilea, prueba del ES, pérdida cuantílica y
+  MCS; Holm sobre las combinaciones.
 
-Se hace una **prueba artificial**: se ocultan observaciones que sí existen, se
-reconstruyen con el filtro y se comparan con el valor real, calculando **MAE** y
-**RMSE**. En nuestras series el error relativo (MAE) fue de aproximadamente
-0.8%–1.5%, lo que sugiere que el filtro reconstruye bien bajo el modelo asumido.
+## 6. Optimización y backtesting (Fases 12–14, DEC-031 a DEC-033)
 
-### Limitaciones
+- Portafolios: 1/N; mínima varianza (muestral y Ledoit-Wolf); mínimo CVaR 95 %
+  (Rockafellar-Uryasev, programa lineal); paridad de riesgo; máximo Sharpe.
+- Restricciones: pesos ≥ 0 que suman 1, máximo 30 % por acción y 40 % por sector.
+- Sharpe = (R_p − r_f) / σ_p con el IBR diario efectivo como r_f.
+- **Walk-forward:** rebalanceo mensual, ventana móvil de 252 días, pesos que derivan entre
+  rebalanceos, costo = c × Σ|w_objetivo − w_derivado| con c = 20 pb (0 y 50 pb como
+  sensibilidad). Diferencia de Sharpe frente al 1/N con bootstrap por bloques (21 días) y Holm.
 
-- El filtro da una **estimación estadística** bajo el modelo de nivel local; no
-  "demuestra" cuál era el valor real.
-- Requiere una serie con suficientes observaciones para estimar el modelo.
-- El suavizado asume que el nivel evoluciona como un camino aleatorio; si el
-  precio tuviera saltos estructurales no capturados, la estimación podría
-  alejarse del valor real.
+## 7. Evaluación final, robustez e interpretación (Fases 15–17)
 
-### Reconstrucción histórica vs. predicción en tiempo real
+- **Fase 15** (DEC-034 a DEC-036): las mismas familias en la prueba, con los modelos reestimados
+  con 2020–2024 y los procedimientos ya congelados; ensayo previo obligatorio que reprodujo las
+  Fases 7–14.
+- **Fase 16** (DEC-037/038, exploratoria): 24 configuraciones de portafolio, volatilidad y VaR
+  año por año, rendimiento año por año, con criterios fijados antes.
+- **Fase 17** (DEC-039/040, descriptiva): determinantes de los pesos, beta de Dimson, riesgo
+  prometido frente al realizado, autocorrelación e iliquidez, petróleo.
 
-- **Reconstrucción histórica** (lo que hacemos): se puede usar información
-  posterior. Es válido para completar la serie antes de analizar.
-- **Predicción en tiempo real**: solo se puede usar información disponible en ese
-  momento. La imputación con suavizado **no** debe usarse directamente en
-  backtesting o predicción sin adaptar el procedimiento (sería data leakage).
+## 8. Extensiones (Fase 21, DEC-046/047)
 
----
+- **SPA de Hansen (2005)** y Reality Check de White (2000): ¿algún modelo supera a la
+  referencia? Bootstrap estacionario de Politis-Romano (bloque medio de 10).
+- **Acierto direccional robusto:** u_it = (1{y>0} − p_y)(1{f>0} − p_f), sumado por fecha, con
+  varianza de Newey-West (rezago ⌊4(T/100)^{2/9}⌋).
+- **Prueba del ES de Acerbi y Székely (2014):** Z2 = Σ X_t I_t / (T α ES_t) + 1, con p-valor por
+  simulación de la distribución predictiva de cada método.
+- **Sharpe probabilístico y deflactado** (Bailey y López de Prado) y prueba de diferencia de
+  Sharpe de Ledoit y Wolf (2008) con HAC.
+- **Portafolios con pronósticos:** covarianza EWMA (λ = 0,97), CCC-GARCH, volatility targeting
+  del 1/N (x = min(1, σ_obj/σ̂), resto al IBR) y carteras diarias con las k acciones de mayor
+  pronóstico de cada modelo.
 
-## 4. Análisis exploratorio
+## 9. Prueba prospectiva (DEC-048)
 
-**Objetivo:** Comprender las características principales de los datos antes del modelamiento.
+Datos posteriores al 2026-09-14, descargados una sola vez por el equipo. Evaluación
+confirmatoria con los primeros 252 días bursátiles y seis hipótesis fijadas de antemano
+(P1–P6), con los mismos procedimientos de la Fase 15 y modelos reestimados con toda la muestra
+2020–2026. Código: `src/data/prospectiva.py` y `src/prospectiva.py` (probado con un simulacro).
 
-**Tareas:**
-- Estadísticas descriptivas (media, varianza, skewness, curtosis).
-- Distribuciones de rendimientos.
-- Gráficos de series temporales.
-- Análisis de tendencias y estacionalidad.
-- Identificación deperiodos relevantes (crisis, recuperaciones).
+## 10. Agente de IA (Fases 18, 19 y 21; DEC-041 a DEC-044, DEC-049/050)
 
----
+Agente sobre Claude Code (skill `/investigador`) con 11 herramientas de contrato estricto (leer y
+buscar en el diario, leer y consultar resultados, pruebas de estacionariedad, ARIMA con
+entrenamiento, verificación de reproducibilidad, tests, proponer cambios), disponibles por línea
+de comandos y como servidor MCP. La regla de oro (no abrir la prueba, no descargar datos, no
+modificar datos, código ni metodología) se impone por diseño de las herramientas y con un hook
+que bloquea esas operaciones. Se evaluó dos veces con escenarios y criterios fijados antes (la
+segunda, con 12 escenarios y 3 repeticiones).
 
-## 5. Análisis estadístico
+## Reproducibilidad
 
-**Objetivo:** Realizar pruebas formales que sustenten las decisiones metodológicas.
-
-**Pruebas:**
-- Pruebas de normalidad (Shapiro-Wilk, Jarque-Bera).
-- Pruebas de estacionariedad (ADF, KPSS).
-- Análisis de correlaciones y correlaciones parciales.
-- Pruebas de cointegración (si aplica).
-- Análisis de heterocedasticidad.
-
----
-
-## 6. Econometría
-
-**Objetivo:** Construir modelos econométricos para modelar y predecir rendimientos.
-
-**Modelos a considerar:**
-- ARIMA / SARIMA para series individuales.
-- GARCH y variantes para modelar volatilidad.
-- VAR para relaciones multivariadas.
-- Modelos de regresión con variables explicativas macroeconómicas.
-
-**Evaluación:**
-- Diagnósticos de residuos.
-- Pruebas de bondad de ajuste.
-- Comparación con modelos de referencia (naïve, random walk).
-
----
-
-## 7. Machine Learning
-
-**Objetivo:** Aplicar modelos de aprendizaje automático para predicción y clasificación.
-
-**Modelos a considerar:**
-- Random Forest para selección de variables.
-- Gradient Boosting (XGBoost, LightGBM) para predicción.
-- SVM para clasificación de señales.
-- PCA para reducción de dimensionalidad.
-
-**Consideraciones:**
-- Respetar el orden temporal en la validación.
-- Evitar data leakage.
-- Usar validación cruzada temporal (TimeSeriesSplit).
-
----
-
-## 8. Redes neuronales
-
-**Objetivo:** Explorar arquitecturas de deep learning para pronóstico de rendimientos.
-
-**Modelos a considerar:**
-- MLP (Multi-Layer Perceptron) como modelo base simple.
-- LSTM (Long Short-Term Memory) para dependencias temporales.
-- Comparar contra modelos econométricos y de ML.
-
-**Consideraciones:**
-- No asumir que una red neuronal es superior.
-- Documentar la arquitectura, hiperparámetros y proceso de entrenamiento.
-- Validar con datos fuera de muestra.
-
----
-
-## 9. Estimación del riesgo
-
-**Objetivo:** Cuantificar el riesgo del portafolio y de los activos individuales.
-
-**Métricas:**
-- Volatilidad histórica y móvil.
-- Value at Risk (VaR) — métodos paramétrico, histórico y de Monte Carlo.
-- Conditional Value at Risk (CVaR).
-- Drawdown máximo.
-- Beta del portafolio.
-
-**Modelos:**
-- GARCH para volatilidad condicional.
-- Simulación de Monte Carlo para distribuciones de rendimiento.
-
----
-
-## 10. Optimización del portafolio
-
-**Objetivo:** Encontrar la composición óptima del portafolio según diferentes criterios.
-
-**Métodos a considerar:**
-- Markowitz (media-varianza).
-- Mínima varianza.
-- Máximo Sharpe Ratio.
-- Risk Parity.
-- Black-Litterman (si se incorporan opiniones de mercado).
-
-**Restricciones:**
-- Peso mínimo y máximo por activo.
-- Posición libre de corto plazo.
-- Restricciones sectoriales (si aplica).
-
----
-
-## 11. Backtesting
-
-**Objetivo:** Evaluar el desempeño del portafolio fuera de muestra.
-
-**Enfoque:**
-- Simulación historica con ventana rolling.
-- Separación estricta train/validation/test.
-- Métricas de performance: Sharpe, Sortino, Calmar, drawdown.
-- Comparación contra benchmarks (COLCAP, buy-and-hold).
-
-**Consideraciones:**
-- Respetar el orden temporal.
-- No utilizar información futura.
-- Documentar costos de transacción (si aplica).
-
----
-
-## 12. Análisis de robustez
-
-**Objetivo:** Verificar que los resultados no dependan de supuestos específicos.
-
-**Pruebas:**
-- Cambio en el periodo de análisis.
-- Cambio en la selección de activos.
-- Sensibilidad a parámetros de optimización.
-- Validación cruzada temporal.
-- Análisis de diferentes métricas de riesgo.
-
----
-
-## 13. Agente de IA
-
-**Objetivo:** Desarrollar un asistente de IA que ayude a coordinar y automatizar partes del proceso de investigación.
-
-**Funcionalidades conceptuales:**
-- Registrar decisiones metodológicas.
-- Sugerir siguiente paso basado en el estado del proyecto.
-- Ejecutar tareas repetitivas (carga de datos, generación de gráficos).
-- Mantener un historial de experimentos.
-
-**Nota:** Esta etapa se implementará progresivamente a medida que avance el proyecto.
-
----
-
-## Nota final
-
-> Las etapas 1 a 5 ya fueron ejecutadas (Fases 2 y 3) y sus resultados se
-> encuentran en `resultados/`. Las etapas restantes siguen siendo un plan.
-> Las decisiones específicas se registran en el `diario_decisiones.md`
-> conforme avance el proyecto.
+Versiones exactas en `requirements.txt`; semillas fijas; 246 tests automáticos;
+`python -m src.reproducir` reejecuta las fases y compara cada tabla con la versión publicada.
