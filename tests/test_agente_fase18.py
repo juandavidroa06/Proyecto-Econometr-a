@@ -256,3 +256,13 @@ def test_evaluacion_v2_conserva_e1_e7_y_criterios_nuevos():
     assert not all(f(afirma, {}) for _, f in e12.criterios)
     with pytest.raises(ValueError):
         v2.registrar_antes("E99_r1")
+
+
+def test_parametros_opcionales_tras_la_segunda_evaluacion():
+    # DEC-050: los agentes omitían parámetros opcionales; ahora tienen valores por defecto.
+    texto, err = h.ejecutar("consultar_resultado", {"archivo": "fase14_metricas.csv",
+                                                    "filtros": [{"columna": "estrategia", "valor": "igual"}]})
+    assert not err and "filas cumplen" in texto
+    texto, err = h.ejecutar("buscar_diario", {"texto": "EWMA"})
+    assert not err
+    assert h.ejecutar("buscar_diario", {"texto": "EWMA", "max_resultados": 30})[1]

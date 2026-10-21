@@ -1,6 +1,6 @@
 # Portafolio Colombiano — Proyecto de Econometría
 
-> **Estado del proyecto:** Fases 0 a 20 completadas (informe final en revisión del equipo)
+> **Estado del proyecto:** Fases 0 a 21 completadas (informe final en revisión del equipo); prueba prospectiva registrada (DEC-048)
 > **Última actualización:** Octubre 2026
 
 ---
@@ -120,6 +120,7 @@ Fases implementadas (las decisiones marcadas como pendientes requieren aprobaci�
 18. **Fase 18 — Agente de IA (DEC-041):** agente de línea de comandos con la API de Claude (`claude-opus-5-5`) y 9 herramientas: consulta el diario y los resultados, ejecuta pruebas sobre entrenamiento o validación, verifica la reproducibilidad de las fases y **solo propone** cambios, que requieren revisión humana. No tiene acceso al bloque de prueba ni puede modificar datos. Cada sesión queda en `informes/bitacora_agente/`. Código en `src/agente/`. La evaluación (Fase 19, plan DEC-042) está en `src/agente/evaluacion.py`.
 19. **Fases 18–19 sobre Claude Code (DEC-043/DEC-044):** el agente funciona dentro de Claude Code con la skill `/investigador`, las mismas herramientas (`python -m src.agente.cli`) y un hook que bloquea el acceso a la prueba, las descargas y la escritura en `datos/` (`.claude/settings.json`). Evaluado con 7 escenarios y agentes nuevos: 38 de 39 criterios (97 %) e integridad del 100 %.
 20. **Fase 20 — Informe final (DEC-045):** `informes/informe_final.md` (fuente) y `informes/informe_final.docx` (generado con `node src/informe/md2docx.js informes/informe_final.md informes/informe_final.docx`, requiere el paquete de npm `docx`; después, `powershell -File src/informe/actualizar_indice.ps1 informes/informe_final.docx` rellena el índice con Word). Cada cifra remite a una decisión del diario y a un archivo de `resultados/`.
+21. **Fase 21 — Extensiones (DEC-046 a DEC-050):** pruebas SPA de Hansen, acierto direccional con HAC, prueba del ES de Acerbi-Székely, Sharpe deflactado y prueba de Ledoit-Wolf; portafolios con covarianza EWMA, CCC-GARCH, volatility targeting y señales de cada modelo (`python -m src.extensiones.fase21`; resultados en `resultados/fase21/`). Agente: herramientas `consultar_resultado` y `buscar_diario`, servidor MCP (`.mcp.json`; Claude Code pide aprobarlo la primera vez; en Mac/Linux cambiar `venv/Scripts/python.exe` por `venv/bin/python`) y segunda evaluación (36 sesiones: 97,5 % de criterios, integridad 100 %). Prueba prospectiva: el equipo descarga una vez los datos posteriores al 2026-09-14 con `python -m src.data.prospectiva --descargar --fin AAAA-MM-DD`, agrega a mano el IBR y evalúa con `python -m src.prospectiva --datos <carpeta>` cuando haya 252 días bursátiles.
 
 Empresas incluidas (tickers de Yahoo Finance):
 

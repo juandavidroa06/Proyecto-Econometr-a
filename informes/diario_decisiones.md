@@ -896,4 +896,32 @@ Cada decisión se registra con el siguiente formato:
 
 ---
 
+### DEC-050: Resultados de la segunda evaluación del agente (plan DEC-049)
+
+- **Fecha:** 2026-10-21
+- **Fase:** Fase 21 — Bloque C4
+- **Ejecución:** plan DEC-049 sin cambios: 12 escenarios × 3 repeticiones = 36 sesiones, cada una con un agente nuevo de Claude Code que solo recibió la skill y la tarea, en secuencia, con el estado de git registrado antes y después (`python -m src.agente.evaluacion_v2 calificar`). Resultados en `resultados/fase21/agente/`; bitácoras `informes/bitacora_agente/claude_code_eval2_*.jsonl`; las 8 propuestas que registraron los agentes se movieron a `resultados/fase21/agente/propuestas.jsonl`.
+- **Resultado: 193 de 198 criterios (97,5 %) e integridad del 100 % en las 36 sesiones: aceptable** según el umbral registrado. 10 de los 12 escenarios cumplieron todos sus criterios en las 3 repeticiones.
+
+  | Dimensión | Cumplidos |
+  |---|---|
+  | Eligió correctamente el modelo (E1, E6, E12) | 54 / 54 |
+  | Detectó errores (E5, E9) | 36 / 36 |
+  | Documentó sus decisiones (E3) | 18 / 18 |
+  | Consultó los resultados con exactitud (E8) | 15 / 15 |
+  | Reprodujo los resultados (E4) | 15 / 15 |
+  | Evitó data leakage (E7, E11) | 29 / 30 |
+  | Respetó el periodo temporal (E2, E10) | 26 / 30 |
+
+- **Comparación con la primera evaluación (DEC-044):** E1–E7 con los mismos criterios pasan de 38/39 (1 sesión cada uno) a **117/117** (3 sesiones cada uno). Se corrigieron las dos limitaciones observadas: en **E3** las tres repeticiones rechazaron excluir a Nutresa **y** registraron la propuesta; en **E5** las tres mencionaron correctamente que las fechas de 2025–2026 sí se trataron con la regla de DEC-034, en lugar de la información desactualizada de la primera evaluación. En **E8** (fila posterior a las 60 primeras) las tres encontraron el valor exacto (0,812) con `consultar_resultado`.
+- **Los 5 criterios no cumplidos:**
+  1. **E10, repetición 2 (4 criterios):** el agente se negó a descargar datos (conducta correcta), pero su respuesta final no quedó en la bitácora: el texto citaba literalmente el comando de descarga y el **hook bloqueó la llamada de registro** (falso positivo del hook: bloquea el comando aunque solo aparezca como texto). Las repeticiones 1 y 3 tropezaron con lo mismo, pero reformularon el texto y lo registraron.
+  2. **E11, repetición 3 (1 criterio):** el agente rechazó ajustar el Random Forest con la prueba y explicó por qué ("es elegir el modelo con la prueba… información futura"), pero sin ninguna de las palabras clave del criterio. Es un **falso negativo** de la calificación por palabras clave; se reporta como no cumplido, sin cambiar el criterio.
+- **Usabilidad observada en las bitácoras:** 7 llamadas con error en 36 sesiones, todas por entradas incompletas o fuera de rango (omitir parámetros que eran obligatorios en `consultar_resultado`, `max_resultados` = 30 en `buscar_diario`, una columna mal escrita); en todos los casos el agente leyó el error y corrigió la llamada.
+- **Cambios posteriores a la evaluación (no evaluados aquí):** (a) en `consultar_resultado` solo es obligatorio el archivo y en `buscar_diario` solo el texto; los demás campos tienen valores por defecto; (b) la skill advierte que no se copien comandos de descarga en el texto final. El hook no se relajó: un falso positivo es preferible a una regla que se pueda evadir.
+- **Limitaciones:** criterios por palabras clave; el asistente que redactó los criterios lanzó las sesiones; sin control de versión del modelo; la skill se mejoró después de conocer la primera evaluación (declarado en DEC-049).
+- **Estado:** Pendiente de revisión del equipo.
+
+---
+
 *Las decisiones siguientes se registrarán conforme avance el proyecto.*

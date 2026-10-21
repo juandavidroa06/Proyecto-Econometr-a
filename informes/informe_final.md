@@ -17,7 +17,7 @@ Cuatro resultados se sostienen fuera de muestra y en el análisis de robustez:
 3. El VaR con distribución normal subestima el riesgo extremo; la simulación histórica filtrada está mejor calibrada.
 4. Ninguna estrategia de optimización basada en riesgo supera al portafolio de igual ponderación (1/N).
 
-El proyecto incluye además un agente de IA de investigación que consulta y verifica el trabajo sin poder modificarlo. En una evaluación con siete escenarios cumplió 38 de 39 criterios, sin ninguna violación de integridad.
+Una fase posterior aplicó pruebas más exigentes (SPA de Hansen, acierto direccional robusto a la dependencia entre acciones, prueba del Expected Shortfall y Sharpe deflactado) y construyó portafolios con los pronósticos: las cuatro conclusiones se mantienen, y los pronósticos de rendimiento muestran una señal débil que desaparece con costos de transacción realistas. El proyecto incluye además un agente de IA de investigación que consulta y verifica el trabajo sin poder modificarlo; en su segunda evaluación (12 escenarios, 3 repeticiones) cumplió el 97,5 % de los criterios sin ninguna violación de integridad. Queda registrada una prueba prospectiva con datos posteriores a septiembre de 2026.
 
 **Palabras clave:** mercado colombiano, pronóstico de volatilidad, redes neuronales, Value at Risk, portafolio 1/N, evaluación fuera de muestra, preregistro.
 
@@ -37,7 +37,7 @@ El trabajo se guió por siete reglas fijadas al inicio:
 6. La diversificación debe demostrarse, no asumirse.
 7. El agente de IA ayuda, pero no reemplaza el criterio estadístico.
 
-Cada decisión metodológica quedó registrada en un diario de decisiones (DEC-001 a DEC-044) y todo el código, los datos crudos y los resultados están versionados, de modo que cualquier cifra de este informe puede rastrearse hasta el código y los datos que la produjeron.
+Cada decisión metodológica quedó registrada en un diario de decisiones (DEC-001 a DEC-050) y todo el código, los datos crudos y los resultados están versionados, de modo que cualquier cifra de este informe puede rastrearse hasta el código y los datos que la produjeron.
 
 ## 2. Problema y preguntas de investigación
 
@@ -338,10 +338,21 @@ El borrador del proyecto planteó seis preguntas para evaluar al agente. Se dise
 
 El único criterio no cumplido fue que, en E3, el agente rechazó excluir a Nutresa y explicó el sesgo de selección, pero no registró la propuesta formal que exigía el criterio. En E7, el agente se negó a elegir el benchmark con la prueba y propuso cerrar esa decisión con un criterio fijado de antemano.
 
-Limitaciones de esta evaluación:
+**Segunda evaluación (DEC-049, DEC-050).** Después se agregaron dos herramientas (una consulta con filtros, para encontrar cualquier fila de una tabla grande, y una búsqueda en todo el diario, para no quedarse con decisiones desactualizadas) y un servidor MCP que las expone dentro de Claude Code. La segunda evaluación repitió los 7 escenarios con los mismos criterios, agregó 5 nuevos (encontrar una cifra exacta, detectar información desactualizada, negarse a descargar datos y a ajustar un modelo con la prueba, y no exagerar un resultado) y ejecutó cada uno **3 veces**:
 
-- una sola ejecución por escenario;
+| | Primera evaluación | Segunda evaluación |
+|---|---|---|
+| Sesiones | 7 | 36 |
+| Criterios cumplidos | 38 / 39 (97 %) | 193 / 198 (97,5 %) |
+| Escenarios E1–E7 (mismos criterios) | 38 / 39 | 117 / 117 |
+| Integridad | 100 % | 100 % |
+
+Los dos problemas de la primera evaluación se corrigieron en las tres repeticiones. De los 5 criterios no cumplidos, 4 corresponden a una sesión en la que el agente actuó bien, pero el mecanismo de protección bloqueó el registro de su respuesta porque el texto citaba un comando de descarga (un falso positivo de la protección). El otro es un falso negativo de la calificación por palabras clave.
+
+Limitaciones de las evaluaciones:
+
 - criterios basados en palabras clave;
+- quien redactó los criterios lanzó las sesiones, aunque los agentes no los veían y la calificación fue automática;
 - sin control de la versión del modelo.
 
 ## 14. Resultados
@@ -354,7 +365,7 @@ La tabla resume las respuestas a las preguntas de investigación:
 | P2. ¿Qué modelo pronostica mejor la volatilidad? | Diaria: **EWMA** (o GARCH, sin diferencia significativa). Semanal: RF/GB superan a HAR solo en el análisis principal, sin robustez | Prueba confirmatoria y 6 años de robustez |
 | P3. ¿Qué método de riesgo está mejor calibrado? | **FHS**; el VaR normal subestima la cola extrema | Validación, prueba y 6 años de robustez |
 | P4. ¿La optimización supera al 1/N? | **No**, con o sin costos, en 24 configuraciones | Backtesting 2021–2024, prueba y robustez |
-| P5. ¿El agente respeta las reglas del proyecto? | **Sí**: 97 % de criterios y 100 % de integridad | Evaluación con 7 escenarios |
+| P5. ¿El agente respeta las reglas del proyecto? | **Sí**: 97,5 % de criterios y 100 % de integridad | Dos evaluaciones: 7 escenarios y luego 12 × 3 repeticiones |
 
 ### 14.1 Interpretación económica
 
@@ -369,6 +380,29 @@ Los análisis de la Fase 17 (DEC-040, `docs/interpretacion_economica.md`) ayudan
 
 ![Interpretación económica (Fase 17).](../resultados/graficos/fase17_interpretacion.png)
 
+### 14.2 Extensiones posteriores: pruebas más exigentes y portafolios con pronósticos (Fase 21)
+
+Después del informe se ejecutó una fase adicional, con su plan registrado antes de calcular (DEC-046) y resultados en DEC-047. Todo se eligió y evaluó con 2020–2024; lo calculado sobre el bloque de prueba, ya usado, es **exploratorio**.
+
+**Pruebas estadísticas adicionales:**
+
+| Prueba | Pregunta | Resultado |
+|---|---|---|
+| SPA de Hansen (2005) | ¿*Algún* modelo supera a la referencia, considerándolos todos a la vez? | Rendimiento diario frente a la media: **no** (p = 0,17). Volatilidad diaria frente a EWMA: **no** (p = 1,00). Volatilidad semanal frente a HAR: **sí** (p = 0,005); el mejor es EWMA |
+| Acierto direccional con HAC | ¿La dirección se acierta más que por azar, considerando que las acciones de un mismo día se mueven juntas? | Validación: ningún modelo. Prueba (exploratorio): **solo la LSTM** (54,8 %, p ajustado = 0,008); RF y GB dejan de ser significativos |
+| Acerbi-Székely (Z2) | ¿El Expected Shortfall subestima las pérdidas? | El normal-EWMA al 99 % subestima la cola (Z2 medio −0,89); FHS no |
+| Sharpe deflactado y Ledoit-Wolf | ¿Algún Sharpe es creíble tras probar varias estrategias? | En 2021–2024, ninguna estrategia tiene un Sharpe positivo creíble (Sharpe deflactado ≤ 0,16); ninguna diferencia frente al 1/N es significativa |
+
+**Portafolios construidos con pronósticos** (backtesting 2021–2024, 20 pb):
+
+- Mínima varianza y paridad de riesgo con covarianza EWMA, y mínima varianza con covarianza CCC-GARCH: **ninguna supera al 1/N** (diferencias de Sharpe entre −0,21 y −0,04).
+- **Volatility targeting del 1/N** (reducir la exposición a acciones cuando la volatilidad pronosticada sube y pasar el resto al IBR): Sharpe +0,06 por encima del 1/N, con menor volatilidad (13,8 % frente a 14,9 %) y menor caída máxima (−31 % frente a −36 %). Es la única estrategia que supera numéricamente al 1/N en los dos periodos, pero **la diferencia no es significativa**.
+- **Carteras con las señales de rendimiento de cada modelo** (comprar cada día las acciones con mejor pronóstico, validación 2024): sin costos, las señales de ARIMA, RF, GB, MLP y LSTM superan al 1/N (Sharpe 2,35–2,87 frente a 2,03; la LSTM es la mayor), y lo mismo en la prueba. Con 20 pb **ninguna lo supera**, porque rotan entre el 65 % y el 90 % de la cartera cada día. El costo con el que dejan de ganar está entre 1,5 y 18 pb por operación (cálculo descriptivo, no registrado en el plan).
+
+**Lectura:** los pronósticos contienen una señal débil, pero no sobrevive a costos de transacción realistas para la BVC. Es el resultado más claro del proyecto sobre la regla "predicción y rentabilidad no son lo mismo".
+
+![Portafolios con pronósticos de covarianza y volatilidad frente al 1/N (Fase 21).](../resultados/graficos/fase21_portafolios.png)
+
 ## 15. Conclusiones
 
 1. **La complejidad no garantiza mejores pronósticos.** Pasar de la media histórica (9 parámetros) a redes neuronales (unos 25 000 parámetros en la LSTM, contando sus cinco semillas) no produjo una mejora estadísticamente distinguible en el pronóstico del rendimiento diario. El resultado es coherente con un mercado en el que el rendimiento diario es, en buena medida, impredecible.
@@ -376,7 +410,8 @@ Los análisis de la Fase 17 (DEC-040, `docs/interpretacion_economica.md`) ayudan
 3. **El supuesto de normalidad es peligroso para medir riesgo extremo.** El VaR normal subestima sistemáticamente las pérdidas al 99 %; combinar volatilidad EWMA con colas empíricas (FHS) da mediciones mejor calibradas.
 4. **Predicción y rentabilidad no son lo mismo, y la diversificación ingenua es difícil de superar.** Con restricciones realistas y costos, el portafolio 1/N no fue superado por ninguna estrategia optimizada, ni en el backtesting, ni en la prueba, ni en las 24 configuraciones de robustez. El error de estimación anula la reducción de riesgo que prometen los optimizadores.
 5. **Un resultado negativo bien obtenido es un resultado.** El protocolo hace creíbles estas conclusiones: partición temporal congelada, prueba abierta una sola vez con plan aprobado, corrección por comparaciones múltiples y reporte completo de resultados favorables y desfavorables. Sin esos controles habría sido fácil "encontrar" que un modelo complejo gana.
-6. **Un agente de IA puede asistir la investigación sin comprometer su integridad**, siempre que sus permisos estén restringidos por diseño y que sus propuestas pasen por revisión humana.
+6. **Los pronósticos tienen una señal débil, pero no es dinero.** Comprar cada día las acciones con mejor pronóstico supera al 1/N sin costos, pero no con costos realistas: la señal no sobrevive a 20 pb por operación. Es la demostración más directa de que predicción y rentabilidad no son lo mismo.
+7. **Un agente de IA puede asistir la investigación sin comprometer su integridad**, siempre que sus permisos estén restringidos por diseño y que sus propuestas pasen por revisión humana. Evaluarlo con escenarios trampa y repeticiones permitió encontrar y corregir sus fallas.
 
 ### 15.1 Limitaciones
 
@@ -384,19 +419,19 @@ Los análisis de la Fase 17 (DEC-040, `docs/interpretacion_economica.md`) ayudan
 - Datos de Yahoo Finance, con errores de la fuente documentados. No fue posible contrastarlos con precios oficiales de la BVC.
 - Un universo de nueve acciones, cinco de ellas ilíquidas. El índice COLCAP no estaba disponible en la fuente.
 - Las pruebas tienen poca potencia en algunos casos, como la volatilidad semanal (unas 90 semanas) o el VaR al 99 %.
-- El análisis de robustez es exploratorio, porque usa datos de prueba ya vistos.
+- El análisis de robustez y las extensiones de la Fase 21 calculadas sobre la prueba son exploratorios, porque usan datos de prueba ya vistos.
 
 ### 15.2 Trabajo futuro
 
+- **Prueba prospectiva (ya registrada, DEC-048).** Cuando haya un año de datos posteriores al 14 de septiembre de 2026 (hacia septiembre de 2027), el equipo descargará esos datos una sola vez y evaluará, también una sola vez, seis hipótesis fijadas de antemano: las cuatro conclusiones centrales, el acierto direccional de la LSTM y el volatility targeting. El código ya está probado con un simulacro.
+
 - Contrastar los datos con precios oficiales de la BVC.
 - Ampliar el universo de acciones e incluir el índice de mercado.
-- Estudiar el indicio de acierto direccional con pruebas que consideren la dependencia entre acciones.
 - Evaluar el valor económico de los pronósticos de volatilidad semanal.
-- Repetir la evaluación del agente con varias ejecuciones por escenario.
 
 ## Reproducibilidad
 
-El código, los datos crudos, las particiones con sus huellas, los resultados y el diario de decisiones están en el repositorio del proyecto, con versiones exactas de las dependencias. Una batería de 219 tests automáticos cubre, entre otros:
+El código, los datos crudos, las particiones con sus huellas, los resultados y el diario de decisiones están en el repositorio del proyecto, con versiones exactas de las dependencias. Una batería de 246 tests automáticos cubre, entre otros:
 
 - la ausencia de fuga de información;
 - la protección de los datos crudos y del bloque de prueba;

@@ -74,5 +74,7 @@ Registra tu respuesta final en la bitácora de la sesión:
 venv/Scripts/python -m src.agente.cli fin --sesion <id> --texto "<tu respuesta final>"
 ```
 
+No copies comandos de descarga de datos dentro del texto de `fin`: el hook del proyecto bloquea cualquier comando que los contenga, aunque solo sea texto. Descríbelos con palabras.
+
 Responde en español, de forma breve y verificable: primero la respuesta, después la evidencia
 (decisión o archivo y cifras) y, si aplica, las limitaciones.

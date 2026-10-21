@@ -92,8 +92,8 @@ DEFINICIONES = [
                       "description": "Columnas a mostrar ([] para todas)"},
          "ordenar_por": {"type": "string", "description": "Columna para ordenar ('' para no ordenar)"},
          "descendente": {"type": "boolean"},
-         "max_filas": {"type": "integer", "description": "Máximo de filas (1 a 60)"}},
-         ["archivo", "filtros", "columnas", "ordenar_por", "descendente", "max_filas"])},
+         "max_filas": {"type": "integer", "description": "Máximo de filas (1 a 60; por defecto 20)"}},
+         ["archivo"])},
     {"name": "buscar_diario",
      "description": "Busca un texto en TODO el diario de decisiones (sin distinguir tildes ni "
                     "mayúsculas) y devuelve las decisiones que lo mencionan, de la más reciente a "
@@ -101,8 +101,8 @@ DEFINICIONES = [
                     "tema: una decisión posterior puede actualizar o reemplazar a una anterior.",
      "input_schema": _esquema({
          "texto": {"type": "string", "description": "Palabra o frase a buscar, p. ej. 2025-02-19"},
-         "max_resultados": {"type": "integer", "description": "Máximo de decisiones (1 a 20)"}},
-         ["texto", "max_resultados"])},
+         "max_resultados": {"type": "integer", "description": "Máximo de decisiones (1 a 20; por defecto 10)"}},
+         ["texto"])},
     {"name": "pruebas_estacionariedad",
      "description": "Calcula ADF, KPSS, Ljung-Box (rendimientos y cuadrados), ARCH-LM y Jarque-Bera "
                     "sobre los rendimientos log de una empresa en entrenamiento o validación.",
@@ -246,7 +246,7 @@ def leer_resultado(archivo, max_filas):
     return f"{nota}\n{texto}"[:LIMITE_TEXTO]
 
 
-def consultar_resultado(archivo, filtros, columnas, ordenar_por, descendente, max_filas):
+def consultar_resultado(archivo, filtros=(), columnas=(), ordenar_por="", descendente=False, max_filas=20):
     df = _leer_csv_resultado(archivo, max_filas)
     todas = list(df.columns)
     mascara = pd.Series(True, index=df.index)
@@ -264,6 +264,7 @@ def consultar_resultado(archivo, filtros, columnas, ordenar_por, descendente, ma
         else:
             mascara &= serie.astype(str).map(normalizar).str.strip() == normalizar(valor)
     sel = df[mascara]
+    columnas = list(columnas)
     faltan = [c for c in columnas + ([ordenar_por] if ordenar_por else []) if c not in df.columns]
     if faltan:
         raise ErrorHerramienta(f"Columnas inexistentes: {faltan}. Columnas: {todas}")
@@ -290,7 +291,7 @@ def _fragmento(linea, buscado, contexto=150):
     return ("…" if a > 0 else "") + linea[a:b] + ("…" if b < len(linea) else "")
 
 
-def buscar_diario(texto, max_resultados):
+def buscar_diario(texto, max_resultados=10):
     if not 1 <= max_resultados <= 20:
         raise ErrorHerramienta("max_resultados debe estar entre 1 y 20.")
     buscado = normalizar(texto).strip()

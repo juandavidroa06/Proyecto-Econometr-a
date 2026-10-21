@@ -1,0 +1,8 @@
+dimension,cumplidos,total,tasa
+Consultó los resultados con exactitud,15,15,1.0
+Detectó errores,36,36,1.0
+Documentó sus decisiones,18,18,1.0
+Eligió correctamente el modelo,54,54,1.0
+Evitó data leakage,29,30,0.9666666666666667
+Reprodujo los resultados,15,15,1.0
+Respetó el periodo temporal,26,30,0.8666666666666667
