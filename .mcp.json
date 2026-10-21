@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "investigador": {
+      "command": "venv/Scripts/python.exe",
+      "args": ["-m", "src.agente.servidor_mcp"]
+    }
+  }
+}

@@ -68,13 +68,41 @@ DEFINICIONES = [
      "description": "Lista los archivos CSV de resultados disponibles en resultados/ (rutas relativas).",
      "input_schema": _esquema({}, [])},
     {"name": "leer_resultado",
-     "description": "Lee un CSV de resultados/ y devuelve sus primeras filas como texto. Los "
-                    "resultados de resultados/fase15/final son la evaluación confirmatoria ya "
-                    "publicada: pueden citarse, no usarse para tomar decisiones nuevas.",
+     "description": "Lee un CSV de resultados/ y devuelve sus primeras filas como texto. Si el "
+                    "archivo tiene más filas de las que necesitas ver, usa consultar_resultado "
+                    "para filtrar. Los resultados de resultados/fase15/final son la evaluación "
+                    "confirmatoria ya publicada: pueden citarse, no usarse para tomar decisiones "
+                    "nuevas; los de resultados/fase21/exploratorio_prueba son exploratorios.",
      "input_schema": _esquema({
          "archivo": {"type": "string", "description": "Ruta relativa dentro de resultados/, p. ej. fase10_media.csv"},
          "max_filas": {"type": "integer", "description": "Máximo de filas (1 a 60)"}},
          ["archivo", "max_filas"])},
+    {"name": "consultar_resultado",
+     "description": "Consulta un CSV de resultados/ filtrando filas por el valor de una o más "
+                    "columnas (todas deben cumplirse), eligiendo columnas y ordenando. Úsala para "
+                    "encontrar filas concretas en tablas grandes (p. ej. universo=9_empresas, "
+                    "estrategia=paridad_riesgo, costo=20pb). Devuelve como máximo 60 filas y la "
+                    "lista de columnas del archivo.",
+     "input_schema": _esquema({
+         "archivo": {"type": "string", "description": "Ruta relativa dentro de resultados/"},
+         "filtros": {"type": "array", "description": "Condiciones columna = valor ([] para ninguna)",
+                     "items": _esquema({"columna": {"type": "string"},
+                                        "valor": {"type": "string"}}, ["columna", "valor"])},
+         "columnas": {"type": "array", "items": {"type": "string"},
+                      "description": "Columnas a mostrar ([] para todas)"},
+         "ordenar_por": {"type": "string", "description": "Columna para ordenar ('' para no ordenar)"},
+         "descendente": {"type": "boolean"},
+         "max_filas": {"type": "integer", "description": "Máximo de filas (1 a 60)"}},
+         ["archivo", "filtros", "columnas", "ordenar_por", "descendente", "max_filas"])},
+    {"name": "buscar_diario",
+     "description": "Busca un texto en TODO el diario de decisiones (sin distinguir tildes ni "
+                    "mayúsculas) y devuelve las decisiones que lo mencionan, de la más reciente a "
+                    "la más antigua, con fragmentos. Úsala antes de afirmar qué se decidió sobre un "
+                    "tema: una decisión posterior puede actualizar o reemplazar a una anterior.",
+     "input_schema": _esquema({
+         "texto": {"type": "string", "description": "Palabra o frase a buscar, p. ej. 2025-02-19"},
+         "max_resultados": {"type": "integer", "description": "Máximo de decisiones (1 a 20)"}},
+         ["texto", "max_resultados"])},
     {"name": "pruebas_estacionariedad",
      "description": "Calcula ADF, KPSS, Ljung-Box (rendimientos y cuadrados), ARCH-LM y Jarque-Bera "
                     "sobre los rendimientos log de una empresa en entrenamiento o validación.",
@@ -126,13 +154,35 @@ def validar_entrada(nombre, entrada):
     faltan = set(esquema["required"]) - set(entrada)
     if extras or faltan:
         raise ErrorHerramienta(f"Campos inválidos (sobran {sorted(extras)}, faltan {sorted(faltan)}).")
-    tipos = {"string": str, "integer": int}
+    _validar_objeto(entrada, esquema, "")
+
+
+_TIPOS = {"string": str, "integer": int, "boolean": bool, "array": list, "object": dict}
+
+
+def _validar_valor(valor, regla, campo):
+    tipo = regla["type"]
+    # bool es subclase de int: un booleano no es un entero válido (y viceversa).
+    if not isinstance(valor, _TIPOS[tipo]) or (tipo == "integer" and isinstance(valor, bool)):
+        raise ErrorHerramienta(f"'{campo}' debe ser de tipo {tipo}.")
+    if "enum" in regla and valor not in regla["enum"]:
+        raise ErrorHerramienta(f"'{campo}' debe ser uno de {regla['enum']}.")
+    if tipo == "array":
+        for i, item in enumerate(valor):
+            _validar_valor(item, regla["items"], f"{campo}[{i}]")
+    if tipo == "object":
+        _validar_objeto(valor, regla, campo)
+
+
+def _validar_objeto(entrada, esquema, prefijo):
+    extras = set(entrada) - set(esquema["properties"])
+    faltan = set(esquema["required"]) - set(entrada)
+    if extras or faltan:
+        donde = f" en '{prefijo}'" if prefijo else ""
+        raise ErrorHerramienta(f"Campos inválidos{donde} (sobran {sorted(extras)}, faltan {sorted(faltan)}).")
     for campo, regla in esquema["properties"].items():
-        valor = entrada[campo]
-        if not isinstance(valor, tipos[regla["type"]]) or isinstance(valor, bool):
-            raise ErrorHerramienta(f"'{campo}' debe ser de tipo {regla['type']}.")
-        if "enum" in regla and valor not in regla["enum"]:
-            raise ErrorHerramienta(f"'{campo}' debe ser uno de {regla['enum']}.")
+        if campo in entrada:
+            _validar_valor(entrada[campo], regla, f"{prefijo}.{campo}" if prefijo else campo)
 
 
 # --- Implementaciones -------------------------------------------------------------------
@@ -169,7 +219,7 @@ def listar_resultados():
                   for p in RUTA_RESULTADOS.rglob("*.csv"))
 
 
-def leer_resultado(archivo, max_filas):
+def _leer_csv_resultado(archivo, max_filas):
     if not 1 <= max_filas <= 60:
         raise ErrorHerramienta("max_filas debe estar entre 1 y 60.")
     ruta = (RUTA_RESULTADOS / archivo).resolve()
@@ -177,12 +227,94 @@ def leer_resultado(archivo, max_filas):
         raise ErrorHerramienta("Solo se pueden leer CSV dentro de resultados/.")
     if not ruta.exists():
         raise ErrorHerramienta(f"No existe resultados/{archivo}.")
-    df = pd.read_csv(ruta)
+    return pd.read_csv(ruta)
+
+
+def _nota_origen(archivo):
+    a = archivo.replace("\\", "/")
+    if "fase15/final" in a:
+        return " — evaluación confirmatoria ya publicada (DEC-036): citar, no decidir con ella."
+    if "exploratorio_prueba" in a:
+        return " — análisis EXPLORATORIO sobre la prueba ya usada (DEC-046): no es confirmatorio."
+    return ""
+
+
+def leer_resultado(archivo, max_filas):
+    df = _leer_csv_resultado(archivo, max_filas)
     texto = df.head(max_filas).to_string(index=False, max_colwidth=40)
-    nota = f"({len(df)} filas en total, se muestran {min(len(df), max_filas)})"
-    if "fase15/final" in archivo.replace("\\", "/"):
-        nota += " — evaluación confirmatoria ya publicada (DEC-036): citar, no decidir con ella."
+    nota = f"({len(df)} filas en total, se muestran {min(len(df), max_filas)})" + _nota_origen(archivo)
     return f"{nota}\n{texto}"[:LIMITE_TEXTO]
+
+
+def consultar_resultado(archivo, filtros, columnas, ordenar_por, descendente, max_filas):
+    df = _leer_csv_resultado(archivo, max_filas)
+    todas = list(df.columns)
+    mascara = pd.Series(True, index=df.index)
+    for f in filtros:
+        col, valor = f["columna"], f["valor"].strip()
+        if col not in df.columns:
+            raise ErrorHerramienta(f"La columna {col!r} no existe. Columnas: {todas}")
+        serie = df[col]
+        if pd.api.types.is_numeric_dtype(serie):
+            try:
+                objetivo = float(valor.replace(",", "."))
+            except ValueError:
+                raise ErrorHerramienta(f"La columna {col!r} es numérica: el valor debe ser un número.")
+            mascara &= (serie - objetivo).abs() <= 1e-9 * max(1.0, abs(objetivo))
+        else:
+            mascara &= serie.astype(str).map(normalizar).str.strip() == normalizar(valor)
+    sel = df[mascara]
+    faltan = [c for c in columnas + ([ordenar_por] if ordenar_por else []) if c not in df.columns]
+    if faltan:
+        raise ErrorHerramienta(f"Columnas inexistentes: {faltan}. Columnas: {todas}")
+    if ordenar_por:
+        sel = sel.sort_values(ordenar_por, ascending=not descendente, kind="mergesort")
+    if columnas:
+        sel = sel[columnas]
+    nota = (f"({len(sel)} filas cumplen los filtros de {len(df)}, se muestran "
+            f"{min(len(sel), max_filas)}){_nota_origen(archivo)}\nColumnas del archivo: {todas}")
+    texto = sel.head(max_filas).to_string(index=False, max_colwidth=40) if len(sel) else "(ninguna fila)"
+    return f"{nota}\n{texto}"[:LIMITE_TEXTO]
+
+
+def _fragmento(linea, buscado, contexto=150):
+    """Trozo de ``linea`` alrededor de la primera aparición de ``buscado`` (ya normalizado)."""
+    # Posición de cada carácter original dentro del texto normalizado.
+    inicio_norm, pos = [], 0
+    for c in linea:
+        inicio_norm.append(pos)
+        pos += len(normalizar(c))
+    k = normalizar(linea).find(buscado)
+    i = next((j for j, p in enumerate(inicio_norm) if p >= k), 0) if k >= 0 else 0
+    a, b = max(0, i - contexto), min(len(linea), i + len(buscado) + contexto)
+    return ("…" if a > 0 else "") + linea[a:b] + ("…" if b < len(linea) else "")
+
+
+def buscar_diario(texto, max_resultados):
+    if not 1 <= max_resultados <= 20:
+        raise ErrorHerramienta("max_resultados debe estar entre 1 y 20.")
+    buscado = normalizar(texto).strip()
+    if len(buscado) < 3:
+        raise ErrorHerramienta("El texto a buscar debe tener al menos 3 caracteres.")
+    diario = _diario()
+    encabezados = list(re.finditer(r"^### (DEC-\d+)[^:\n]*:\s*(.+)$", diario, flags=re.M))
+    resultados = []
+    for i, m in enumerate(encabezados):
+        fin = encabezados[i + 1].start() if i + 1 < len(encabezados) else len(diario)
+        bloque = diario[m.start():fin]
+        lineas = [l.strip() for l in bloque.splitlines() if buscado in normalizar(l)]
+        if not lineas:
+            continue
+        estado = re.search(r"\*\*Estado:\*\*\s*(.+)", bloque)
+        resultados.append({"id": m.group(1), "titulo": m.group(2).strip(),
+                           "estado": estado.group(1).strip()[:120] if estado else "",
+                           "menciones": len(lineas),
+                           "fragmentos": [_fragmento(l, buscado) for l in lineas[:2]]})
+    resultados.sort(key=lambda r: int(r["id"].split("-")[1]), reverse=True)
+    return {"buscado": texto, "decisiones_que_lo_mencionan": len(resultados),
+            "nota": "Ordenadas de la más reciente a la más antigua; una decisión posterior puede "
+                    "actualizar a una anterior.",
+            "resultados": resultados[:max_resultados]}
 
 
 def pruebas_estacionariedad(empresa, bloque):
@@ -283,6 +415,7 @@ def proponer_cambio(titulo, accion_propuesta, motivo, evidencia, ruta=None):
 IMPLEMENTACIONES = {
     "listar_decisiones": listar_decisiones, "leer_decision": leer_decision,
     "listar_resultados": listar_resultados, "leer_resultado": leer_resultado,
+    "consultar_resultado": consultar_resultado, "buscar_diario": buscar_diario,
     "pruebas_estacionariedad": pruebas_estacionariedad, "seleccionar_arima": seleccionar_arima,
     "verificar_reproducibilidad": verificar_reproducibilidad, "ejecutar_tests": ejecutar_tests,
     "proponer_cambio": proponer_cambio,

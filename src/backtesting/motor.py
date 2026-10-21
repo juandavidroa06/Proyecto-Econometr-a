@@ -38,12 +38,14 @@ def ventana_estimacion(rend, fecha, largo):
     return rend.iloc[pos + 1 - largo:pos + 1]
 
 
-def simular(rend, pesos_objetivo, costo, fin):
+def simular(rend, pesos_objetivo, costo, fin, sin_costo=()):
     """Simula la estrategia.
 
     ``rend``: rendimientos SIMPLES diarios (DataFrame, puede tener NaN).
     ``pesos_objetivo``: dict {fecha_rebalanceo: Series de pesos}.
     ``costo``: costo por lado (proporción, p. ej. 0.002 = 20 pb).
+    ``sin_costo``: activos cuya rotación no paga costo (p. ej. el IBR en el
+    volatility targeting de la Fase 21); por defecto ninguno, como en DEC-032.
     Retorna (DataFrame diario con rendimiento neto, bruto, costo y rotación;
     Series de rotación por rebalanceo).
     """
@@ -60,11 +62,16 @@ def simular(rend, pesos_objetivo, costo, fin):
     if len(dias) == 0:
         raise ValueError("No hay días para simular después del primer rebalanceo.")
 
+    desconocidos = set(sin_costo) - set(activos)
+    if desconocidos:
+        raise ValueError(f"Activos sin costo que no están en los pesos: {sorted(desconocidos)}")
+    con_costo = np.array([a not in sin_costo for a in activos], dtype=float)
+
     w = pesos_objetivo[fechas[0]].to_numpy(float)
     rotaciones = {fechas[0]: 1.0}                    # compra inicial desde efectivo
     # La compra inicial ocurre al cierre de fechas[0], que no se simula: su
     # costo se descuenta en el primer día simulado.
-    costo_inicial = costo * 1.0
+    costo_inicial = costo * 1.0 if not sin_costo else costo * float(w @ con_costo)
     siguiente = iter(fechas[1:])
     proximo = next(siguiente, None)
     filas = []
@@ -79,7 +86,7 @@ def simular(rend, pesos_objetivo, costo, fin):
             objetivo = pesos_objetivo[proximo].to_numpy(float)
             rot = float(np.abs(objetivo - w).sum())
             rotaciones[proximo] = rot
-            c_dia += costo * rot
+            c_dia += costo * (rot if not sin_costo else float(np.abs(objetivo - w) @ con_costo))
             w = objetivo
             proximo = next(siguiente, None)
         neto = (1 + bruto) * (1 - c_dia) - 1

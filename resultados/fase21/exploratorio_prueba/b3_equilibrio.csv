@@ -1,0 +1,13 @@
+universo,estrategia,costo_equilibrio_pb,nota
+9_empresas,top3_media_train,,"descriptivo, no registrado en DEC-046"
+9_empresas,top3_arima,3.565374435856939,"descriptivo, no registrado en DEC-046"
+9_empresas,top3_random_forest,10.789871634915471,"descriptivo, no registrado en DEC-046"
+9_empresas,top3_gradient_boosting,8.195169689133765,"descriptivo, no registrado en DEC-046"
+9_empresas,top3_mlp,8.381062699481847,"descriptivo, no registrado en DEC-046"
+9_empresas,top3_lstm,18.069538613781333,"descriptivo, no registrado en DEC-046"
+liquidas,top2_media_train,,"descriptivo, no registrado en DEC-046"
+liquidas,top2_arima,,"descriptivo, no registrado en DEC-046"
+liquidas,top2_random_forest,8.129766257479787,"descriptivo, no registrado en DEC-046"
+liquidas,top2_gradient_boosting,2.515676291659474,"descriptivo, no registrado en DEC-046"
+liquidas,top2_mlp,5.33114061690867,"descriptivo, no registrado en DEC-046"
+liquidas,top2_lstm,13.658576505258678,"descriptivo, no registrado en DEC-046"

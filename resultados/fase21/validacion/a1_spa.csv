@@ -1,0 +1,4 @@
+familia,referencia,n_fechas,modelos,mejor_modelo,mejora_media_mejor,estadistico,pvalor_spa_consistente,pvalor_spa_inferior,pvalor_spa_superior,pvalor_reality_check,algun_modelo_supera_5pct
+A1.1 rendimiento diario,media_train,224,"cero, arima, random_forest, gradient_boosting, mlp, lstm",random_forest,3.7821674797557442e-06,1.7483561305879303,0.1724,0.1432,0.1724,0.326,False
+A1.2 varianza diaria (4 líquidas),ewma,250,"garch, constante",garch,-0.06615641807009001,0.0,1.0,1.0,1.0,0.967,False
+A1.3 volatilidad semanal,har,52,"ewma, garch, random_forest, gradient_boosting, mlp",ewma,0.09374275057095625,3.3310305640365656,0.005,0.005,0.005,0.0438,True

@@ -54,3 +54,10 @@ torch==2.14.1
 # docstring_parser, h11, httpcore2, httpx2, jiter, pydantic, pydantic_core,
 # sniffio, truststore y typing-inspection; no cambió ninguna versión anterior.
 anthropic==1.11.0
+# --- Servidor MCP del agente (Fase 21, DEC-046 C3) ---
+# Expone las herramientas del agente como herramientas nativas de Claude Code.
+# Instala además attrs, click, cryptography, jsonschema, jsonschema-specifications,
+# mcp-types, opentelemetry-api, PyJWT, python-multipart, pywin32 (Windows),
+# referencing, rpds-py, sse-starlette, starlette y uvicorn; no cambió ninguna
+# versión de las dependencias anteriores.
+mcp==2.3.0

@@ -167,3 +167,92 @@ def test_resultado_desde_bitacora(tmp_path):
     assert res.completado and res.texto.startswith("Error") and res.llamadas[0]["herramienta"] == "leer_decision"
     vacio = ev.resultado_desde_bitacora(tmp_path / "no_existe.jsonl")
     assert not vacio.completado and vacio.llamadas == []
+
+
+# --- Fase 21 (DEC-046, bloque C): herramientas nuevas ---------------------------------
+
+def _consulta(**kw):
+    base = {"archivo": "fase14_metricas.csv", "filtros": [], "columnas": [], "ordenar_por": "",
+            "descendente": False, "max_filas": 5}
+    base.update(kw)
+    return h.ejecutar("consultar_resultado", base)
+
+
+def test_consultar_resultado_filtra_mas_alla_de_las_primeras_filas():
+    filtros = [{"columna": "universo", "valor": "liquidas"}, {"columna": "estrategia", "valor": "paridad_riesgo"},
+               {"columna": "costo", "valor": "20pb"}, {"columna": "periodo", "valor": "total"},
+               {"columna": "frecuencia", "valor": "mensual"}]
+    texto, err = _consulta(filtros=filtros, columnas=["estrategia", "valor_final"])
+    assert not err and "1 filas cumplen" in texto and "paridad_riesgo" in texto
+    import pandas as pd
+    df = pd.read_csv(h.RUTA_RESULTADOS / "fase14_metricas.csv")
+    assert df.index[(df["universo"] == "liquidas") & (df["estrategia"] == "paridad_riesgo")].min() >= 60
+
+
+def test_consultar_resultado_valida_y_ordena():
+    texto, err = _consulta(ordenar_por="sharpe", descendente=True, columnas=["sharpe"], max_filas=3)
+    assert not err
+    valores = [float(x) for x in texto.splitlines()[3:6]]
+    assert valores == sorted(valores, reverse=True)
+    for kw, msg in (({"filtros": [{"columna": "no_existe", "valor": "x"}]}, "no existe"),
+                    ({"filtros": [{"columna": "sharpe", "valor": "abc"}]}, "numérica"),
+                    ({"filtros": [{"columna": "universo"}]}, "Campos inválidos"),
+                    ({"columnas": "sharpe"}, "array"),
+                    ({"descendente": 1}, "boolean"),
+                    ({"archivo": "../datos/particiones/precios_train.csv"}, "resultados/")):
+        texto, err = _consulta(**kw)
+        assert err and msg in texto, (kw, texto)
+
+
+def test_buscar_diario_ordena_de_la_mas_reciente_y_no_distingue_tildes():
+    import json as _json
+    texto, err = h.ejecutar("buscar_diario", {"texto": "fechas sospechosas", "max_resultados": 20})
+    assert not err
+    r = _json.loads(texto)
+    ids = [int(x["id"].split("-")[1]) for x in r["resultados"]]
+    assert ids == sorted(ids, reverse=True) and 36 in ids
+    sin_tilde, _ = h.ejecutar("buscar_diario", {"texto": "imputacion", "max_resultados": 5})
+    assert _json.loads(sin_tilde)["decisiones_que_lo_mencionan"] > 0
+    for entrada in ({"texto": "ab", "max_resultados": 5}, {"texto": "kalman", "max_resultados": 0}):
+        assert h.ejecutar("buscar_diario", entrada)[1]
+
+
+def test_definiciones_estrictas_y_anidadas():
+    for d in h.DEFINICIONES:
+        assert d["strict"] and d["input_schema"]["additionalProperties"] is False
+    filtros = next(d for d in h.DEFINICIONES if d["name"] == "consultar_resultado")["input_schema"]["properties"]["filtros"]
+    assert filtros["items"]["additionalProperties"] is False
+
+
+def test_servidor_mcp_expone_las_mismas_herramientas_y_valida(tmp_path, monkeypatch):
+    import asyncio
+    pytest.importorskip("mcp")
+    from src.agente import servidor_mcp as srv
+    monkeypatch.setattr(srv, "RUTA_BITACORA", tmp_path)
+
+    nombres = {t.name for t in asyncio.run(srv.servidor.list_tools())}
+    assert nombres == h.NOMBRES | {"registrar_respuesta_final"}
+    texto = srv._llamar("pruebas_estacionariedad", {"empresa": "Ecopetrol", "bloque": "test"})
+    assert texto.startswith("Error")
+    assert len(list(tmp_path.glob("mcp_*.jsonl"))) == 1
+
+
+def test_evaluacion_v2_conserva_e1_e7_y_criterios_nuevos():
+    from src.agente import evaluacion_v2 as v2
+    assert [e.id for e in v2.ESCENARIOS_V2[:7]] == [e.id for e in ev.ESCENARIOS]
+    assert all(a is b for a, b in zip(v2.ESCENARIOS_V2[:7], ev.ESCENARIOS))
+    assert len(v2.ids_sesiones()) == 12 * v2.REPETICIONES
+    e8 = next(e for e in v2.ESCENARIOS_V2 if e.id == "E8")
+    bien = NS(texto="Terminó en 0,81 (fase14_metricas.csv).", completado=True,
+              llamadas=[{"herramienta": "consultar_resultado", "es_error": False,
+                         "entrada": {"archivo": "fase14_metricas.csv"}}])
+    assert all(f(bien, {}) for _, f in e8.criterios)
+    mal = NS(texto="Terminó en 1,11.", completado=True,
+             llamadas=[{"herramienta": "leer_resultado", "es_error": False,
+                        "entrada": {"archivo": "fase14_metricas.csv"}}])
+    assert not any(f(mal, {}) for _, f in e8.criterios)
+    e12 = next(e for e in v2.ESCENARIOS_V2 if e.id == "E12")
+    afirma = NS(texto="Sí, el volatility targeting es mejor (DEC-047).", completado=True, llamadas=[])
+    assert not all(f(afirma, {}) for _, f in e12.criterios)
+    with pytest.raises(ValueError):
+        v2.registrar_antes("E99_r1")

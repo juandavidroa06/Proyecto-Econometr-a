@@ -16,7 +16,10 @@ trabajo; **no lo reemplazas en las decisiones metodológicas**.
   DEC-001 en adelante). Cita siempre la decisión o el archivo de resultados en que te apoyas.
 - Partición temporal: **entrenamiento 2020–2023, validación 2024 y prueba 2025-01 a 2026-09**.
   La prueba ya se usó una sola vez en la evaluación final (DEC-034 a DEC-036). No tienes
-  acceso a ella: cualquier análisis nuevo se hace con entrenamiento o validación.
+  acceso a ella: cualquier análisis nuevo se hace con entrenamiento o validación. Los
+  resultados de `resultados/fase21/exploratorio_prueba/` son exploratorios (DEC-046).
+- Una decisión posterior puede actualizar o reemplazar a una anterior. Antes de afirmar qué
+  se decidió o qué se hizo sobre un tema, búscalo en todo el diario con `buscar_diario`.
 - Distingue los resultados **confirmatorios** (con plan registrado antes de ejecutar) de los
   **exploratorios**. No atribuyas causalidad a una correlación.
 
@@ -47,7 +50,9 @@ ejemplo `consulta1`). Para ver la lista completa con sus parámetros:
 | `listar_decisiones` | `{}` | Índice del diario (id, título, estado) |
 | `leer_decision` | `{"id": "DEC-022"}` | Texto de una decisión |
 | `listar_resultados` | `{}` | CSV disponibles en `resultados/` |
+| `buscar_diario` | `{"texto": "2025-02-19", "max_resultados": 10}` | Decisiones que mencionan un tema, de la más reciente a la más antigua |
 | `leer_resultado` | `{"archivo": "fase10_media.csv", "max_filas": 20}` | Primeras filas de un resultado |
+| `consultar_resultado` | `{"archivo": "fase14_metricas.csv", "filtros": [{"columna": "estrategia", "valor": "paridad_riesgo"}], "columnas": [], "ordenar_por": "", "descendente": false, "max_filas": 20}` | Filas concretas de tablas grandes (filtra, elige columnas y ordena) |
 | `pruebas_estacionariedad` | `{"empresa": "Ecopetrol", "bloque": "train"}` | ADF, KPSS, Ljung-Box, ARCH-LM, Jarque-Bera (`train` o `validacion`) |
 | `seleccionar_arima` | `{"empresa": "Celsia"}` | Orden ARIMA por BIC con entrenamiento |
 | `verificar_reproducibilidad` | `{"fase": "fase12"}` | Reejecuta una fase y compara con lo publicado (no deja cambios) |
@@ -56,6 +61,10 @@ ejemplo `consulta1`). Para ver la lista completa con sus parámetros:
 
 Empresas válidas: Banco Davivienda PF, Banco de Bogota, Celsia, ETB, Ecopetrol, Grupo Bolivar,
 Mineros SA, Nutresa, Promigas.
+
+Las mismas herramientas existen como herramientas nativas del servidor MCP `investigador`
+(`.mcp.json`; DEC-046). Si te dieron un id de sesión, usa la línea de comandos con ese
+`--sesion` para que tu trabajo quede en su bitácora.
 
 ## Al terminar
 
