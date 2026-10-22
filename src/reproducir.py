@@ -60,7 +60,9 @@ def comparar(nuevo, publicado):
            and pd.api.types.is_numeric_dtype(publicado[c])]
     otras = [c for c in nuevo.columns if c not in num]
     for c in otras:
-        a, b = nuevo[c].astype(str).to_numpy(), publicado[c].astype(str).to_numpy()
+        # fillna: con pandas 3, astype(str) conserva NaN y NaN != NaN.
+        a = nuevo[c].fillna("").astype(str).to_numpy()
+        b = publicado[c].fillna("").astype(str).to_numpy()
         if not np.array_equal(a, b):
             return False, np.nan, f"columna {c!r} distinta"
     if not num:

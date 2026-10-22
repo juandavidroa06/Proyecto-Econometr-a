@@ -924,4 +924,17 @@ Cada decisión se registra con el siguiente formato:
 
 ---
 
+### DEC-051: Mantenimiento — documentación, script de reproducción y tests en GitHub Actions
+
+- **Fecha:** 2026-10-22
+- **Fase:** mantenimiento (sin cambios de datos, modelos ni metodología)
+- **Decisión:** (a) `docs/metodos.md` y el README se actualizan a lo realmente ejecutado; (b) se agrega `src/reproducir.py`, que reejecuta las fases 6–14, la extensión semanal, 16, 17 y 21, compara cada CSV con el último commit (tolerancia 1e-6) y restaura lo publicado; no ejecuta la Fase 15 ni descarga datos; (c) se agrega `.github/workflows/tests.yml` para correr los tests en cada push; (d) se elimina `fase4.patch`, archivo suelto que sigue en el historial de git.
+- **Corrección del comparador:** la primera corrida completa (2026-10-21) dio 88 de 96 tablas. 7 de las 8 diferencias eran un falso positivo: con pandas 3, `astype(str)` conserva los `NaN` de las columnas de texto (`avisos`, `ocultas`, `zona_basilea`, `garch_convergio`) y `NaN != NaN`. Se compara ahora con los vacíos como texto vacío (`tests/test_reproducir.py`). La octava, `semanal_cv.csv`, fue un cambio de orden entre filas con MSE empatado (diferencia de 2e-16); los hiperparámetros elegidos y los pronósticos no cambian (diferencias ≤ 1e-13) y no se repitió en la corrida siguiente.
+- **Resultado:** corrida completa del 2026-10-22 con el comparador corregido: **96 de 96 tablas reproducen** (≈ 85 min; la Fase 21 toma ≈ 67). El repositorio quedó sin cambios en `resultados/`.
+- **Limitación:** el orden de filas empatadas en `semanal_cv.csv` puede variar entre corridas; si vuelve a aparecer, es ruido de punto flotante y no un cambio de resultados.
+- **Alternativas consideradas:** relajar la tolerancia (rechazada: ocultaría diferencias reales); ordenar las tablas antes de comparar (rechazada por ahora: el orden publicado es parte del resultado).
+- **Estado:** Aceptada (mantenimiento).
+
+---
+
 *Las decisiones siguientes se registrarán conforme avance el proyecto.*
